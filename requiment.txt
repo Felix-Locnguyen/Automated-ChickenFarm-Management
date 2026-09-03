@@ -1,0 +1,13 @@
+os
+tempfile
+shutil
+pandas 
+pytest
+pip install --upgrade matplotlib fonttools
+fastapi 
+uvicorn 
+sqlalchemy
+alembic
+psycopg2-binary
+python-dotenv
+pydantic
