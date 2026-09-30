@@ -1,0 +1,2761 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Trang Trại Gà</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #fffbf0;
+            color: #2d2d2a;
+        }
+
+        .container {
+            min-height: 100vh;
+            background-color: #fffbf0;
+            padding-bottom: 120px;
+        }
+
+        /* HEADER */
+        header {
+            background-color: #fff8f0;
+            border-bottom: 2px solid #d4a574;
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .emoji-icon {
+            font-size: 32px;
+        }
+
+        header h1 {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0;
+            color: #654321;
+        }
+
+        header p {
+            font-size: 12px;
+            color: #a0826d;
+            margin: 4px 0 0 0;
+        }
+
+        .btn-icon {
+            position: relative;
+            padding: 10px;
+            border-radius: 50%;
+            background-color: #f5ede0;
+            border: none;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .alert-badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 18px;
+            height: 18px;
+            background-color: #dc2626;
+            color: white;
+            border-radius: 50%;
+            font-size: 10px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* MAIN */
+        main {
+            max-width: 100%;
+            padding: 12px;
+            padding-bottom: 100px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* CARD GRID */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-success {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            color: white;
+        }
+
+        .card-warning {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+        }
+
+        .card-info {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+
+        .card-default {
+            background-color: #fff8f0;
+            border: 2px solid #d4a574;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .card-badge {
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .card-value {
+            font-size: 22px;
+            font-weight: 700;
+            margin: 8px 0 0 0;
+        }
+
+        .card-label {
+            font-size: 12px;
+            margin: 4px 0 0 0;
+            opacity: 0.9;
+        }
+
+        /* SECTION TITLE */
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #654321;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* COOP CARD */
+        .coop-card {
+            padding: 16px;
+            border-radius: 12px;
+            border: 2px solid #d4a574;
+            background-color: #fff8f0;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 12px;
+        }
+
+        .coop-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .coop-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .coop-name {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #16a34a;
+        }
+
+        .status-dot.warning {
+            background-color: #c2410c;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .coop-name h4 {
+            font-size: 14px;
+            font-weight: 700;
+            color: #654321;
+            margin: 0;
+        }
+
+        .coop-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            background-color: #fff8f0;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .stat-item {
+            font-size: 10px;
+            color: #a0826d;
+        }
+
+        .stat-value {
+            font-size: 13px;
+            font-weight: 700;
+            color: #654321;
+            margin: 4px 0 0 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background-color: #e8d9ca;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #16a34a;
+            transition: width 0.3s;
+        }
+
+        .progress-fill.warning {
+            background-color: #dc2626;
+        }
+
+        /* TABS */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* SEARCH */
+        .search-box {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 12px 10px 40px;
+            border-radius: 12px;
+            border: 2px solid #d4a574;
+            background-color: #fff8f0;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .search-box input:focus {
+            border-color: #16a34a;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 10px;
+            font-size: 18px;
+        }
+
+        /* DETAIL VIEW */
+        .detail-view {
+            display: none;
+        }
+
+        .detail-view.active {
+            display: block;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background-color: #fff8f0;
+            border: 2px solid #d4a574;
+            cursor: pointer;
+            font-size: 14px;
+            color: #654321;
+            margin-bottom: 12px;
+        }
+
+        .back-btn:hover {
+            background-color: #e8d9ca;
+        }
+
+        /* DEVICE CONTROLS */
+        .device-card {
+            background-color: #fff8f0;
+            border: 2px solid #d4a574;
+            padding: 12px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .device-info {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex: 1;
+        }
+
+        .device-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background-color: #fef3c7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .device-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: #654321;
+            margin: 0;
+        }
+
+        .device-status {
+            font-size: 10px;
+            color: #a0826d;
+            margin: 2px 0 0 0;
+        }
+
+        .toggle-switch {
+            width: 44px;
+            height: 24px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            background-color: #d1d5db;
+            transition: background-color 0.3s;
+        }
+
+        .toggle-switch.active {
+            background-color: #16a34a;
+        }
+
+        .toggle-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: white;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: left 0.3s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .toggle-switch.active .toggle-thumb {
+            left: 22px;
+        }
+
+        /* NAVIGATION */
+        nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #fff8f0;
+            border-top: 2px solid #d4a574;
+            padding: 8px 16px;
+            z-index: 40;
+            max-width: 480px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-around;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 12px;
+            border: none;
+            background: transparent;
+            border-radius: 12px;
+            cursor: pointer;
+            color: #a0826d;
+            font-size: 12px;
+            font-weight: 400;
+            transition: all 0.2s;
+        }
+
+        .nav-item.active {
+            background-color: #f5ede0;
+            color: #16a34a;
+            font-weight: 600;
+        }
+
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            background-color: rgba(0, 0, 0, 0.4);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background-color: #fff8f0;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 400px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: 2px solid #d4a574;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #654321;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #a0826d;
+        }
+
+        .alerts-container {
+            max-height: 240px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+        }
+
+        .alert-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            background-color: #fef3c7;
+            border: 1px solid #fbbf24;
+        }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .alert-coop {
+            font-size: 12px;
+            font-weight: 700;
+            color: #a16207;
+        }
+
+        .alert-time {
+            font-size: 10px;
+            color: #78716c;
+        }
+
+        .alert-message {
+            font-size: 12px;
+            color: #92400e;
+            margin: 0;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background-color: #16a34a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-primary:hover {
+            background-color: #15803d;
+        }
+
+        /* TOAST */
+        .toast {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            background-color: #16a34a;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-size: 14px;
+            font-weight: 500;
+            animation: slideDown 0.3s;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        /* STATS */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            background-color: #fff8f0;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stats-item p {
+            margin: 0;
+        }
+
+        /* LOGS */
+        .log-item {
+            font-size: 11px;
+            border-left: 2px solid #16a34a;
+            padding-left: 8px;
+            margin-bottom: 6px;
+        }
+
+        .log-time {
+            color: #a0826d;
+            font-weight: 600;
+        }
+
+        .log-message {
+            color: #654321;
+            margin-left: 4px;
+        }
+
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .device-toggle {
+            background-color: #fff8f0;
+            border: 2px solid #d4a574;
+            padding: 12px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .device-label {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .camera-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .camera-view {
+            background-color: #2d2d2a;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .camera-status {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            z-index: 10;
+            display: flex;
+            gap: 8px;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: white;
+        }
+
+        .camera-feed {
+            height: 180px;
+            background-color: #16a34a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .dot.online {
+            background-color: #16a34a;
+        }
+
+        .dot.offline {
+            background-color: #78716c;
+        }
+
+        /* FEED SCHEDULE */
+        .feed-schedule {
+            background-color: #fff8f0;
+            border: 2px solid #d4a574;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .feed-schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .btn-add {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 2px solid #16a34a;
+            background-color: #16a34a;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-add:hover {
+            background-color: #15803d;
+            border-color: #15803d;
+        }
+
+        .feed-form {
+            background-color: #f5ede0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .feed-form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .feed-form-group label {
+            display: block;
+            font-size: 10px;
+            color: #a0826d;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .feed-form-group input,
+        .feed-form-group select {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #d4a574;
+            border-radius: 6px;
+            font-size: 12px;
+            background-color: #fff8f0;
+            outline: none;
+        }
+
+        .feed-form-group input:focus,
+        .feed-form-group select:focus {
+            border-color: #16a34a;
+        }
+
+        .btn-save-feed {
+            width: 100%;
+            padding: 8px;
+            background-color: #16a34a;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-save-feed:hover {
+            background-color: #15803d;
+        }
+
+        .feed-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .feed-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f5ede0;
+            padding: 10px 12px;
+            border-radius: 8px;
+        }
+
+        .feed-item-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .feed-time {
+            font-size: 13px;
+            font-weight: 600;
+            color: #654321;
+        }
+
+        .feed-type {
+            font-size: 11px;
+            background-color: #d4a574;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .feed-amount {
+            font-size: 12px;
+            color: #a0826d;
+            font-weight: 600;
+        }
+
+        .btn-remove-feed {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: none;
+            background-color: #dc2626;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-remove-feed:hover {
+            background-color: #b91c1c;
+        }
+
+        /* THRESHOLD SETTINGS */
+        .threshold-settings {
+            background-color: #fff8f0;
+            border: 2px solid #d4a574;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .threshold-section {
+            margin-bottom: 12px;
+        }
+
+        .threshold-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #654321;
+            margin: 0 0 8px 0;
+        }
+
+        .threshold-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .threshold-input label {
+            display: block;
+            font-size: 10px;
+            color: #a0826d;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .threshold-input input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #d4a574;
+            border-radius: 6px;
+            font-size: 14px;
+            background-color: #f5ede0;
+            outline: none;
+            font-weight: 600;
+            color: #654321;
+        }
+
+        .threshold-input input:focus {
+            border-color: #16a34a;
+        }
+
+        .btn-save-threshold {
+            width: 100%;
+            padding: 10px;
+            background-color: #16a34a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-save-threshold:hover {
+            background-color: #15803d;
+        }
+
+        /* DELETE COOP DATA */
+        .btn-delete-data {
+            width: 100%;
+            padding: 12px;
+            background-color: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: all 0.2s;
+        }
+
+        .btn-delete-data:hover {
+            background-color: #b91c1c;
+        }
+
+        .confirm-code {
+            font-size: 32px;
+            font-weight: 700;
+            color: #dc2626;
+            letter-spacing: 8px;
+            margin: 16px 0;
+            background-color: #fef2f2;
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: 2px dashed #dc2626;
+        }
+
+        .confirm-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #d4a574;
+            border-radius: 8px;
+            font-size: 16px;
+            text-align: center;
+            outline: none;
+            font-weight: 600;
+            color: #654321;
+        }
+
+        .confirm-input:focus {
+            border-color: #dc2626;
+        }
+
+        .btn-confirm-delete {
+            flex: 1;
+            padding: 10px;
+            background-color: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-confirm-delete:hover {
+            background-color: #b91c1c;
+        }
+
+        .btn-cancel-delete {
+            flex: 1;
+            padding: 10px;
+            background-color: #e8d9ca;
+            color: #654321;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel-delete:hover {
+            background-color: #d4a574;
+        }
+
+        /* FINANCIAL */
+        .fin-tab-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .fin-tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #d4a574;
+            border-radius: 8px;
+            background-color: #f5ede0;
+            font-weight: 600;
+            font-size: 14px;
+            color: #a0826d;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .fin-tab-btn.active {
+            background-color: #654321;
+            color: white;
+            border-color: #654321;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #654321;
+            margin-bottom: 4px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #d4a574;
+            border-radius: 6px;
+            font-size: 13px;
+            background-color: #f5ede0;
+            outline: none;
+            color: #654321;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #16a34a;
+        }
+
+        .form-divider {
+            height: 1px;
+            background-color: #e8d9ca;
+            margin: 12px 0;
+        }
+
+        .total-display {
+            background-color: #f5ede0;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 12px 0;
+        }
+
+        .total-label {
+            font-size: 12px;
+            color: #a0826d;
+            margin-bottom: 4px;
+        }
+
+        .total-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #16a34a;
+        }
+
+        .btn-save-finance {
+            width: 100%;
+            padding: 12px;
+            background-color: #16a34a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-save-finance:hover {
+            background-color: #15803d;
+        }
+
+        .fin-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .btn-history {
+            background-color: #654321;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .btn-history:hover {
+            background-color: #4a3219;
+        }
+
+        .fin-record-card {
+            background-color: #f5ede0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .fin-record-card:hover {
+            background-color: #e8d9ca;
+        }
+
+        .fin-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .fin-card-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .fin-card-type {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .type-income {
+            background-color: #dcfce7;
+            color: #16a34a;
+        }
+
+        .type-expense {
+            background-color: #fef2f2;
+            color: #dc2626;
+        }
+
+        .fin-card-total {
+            font-size: 14px;
+            font-weight: 700;
+            color: #654321;
+        }
+
+        .fin-card-details {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: #a0826d;
+        }
+
+        .fin-card-details b {
+            color: #654321;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e8d9ca;
+            font-size: 13px;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: #a0826d;
+            font-weight: 600;
+        }
+
+        .detail-value {
+            color: #654321;
+            font-weight: 600;
+        }
+
+        .btn-edit {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            flex: 1;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-edit:hover {
+            background-color: #1d4ed8;
+        }
+
+        .btn-delete-modal {
+            background-color: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            flex: 1;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-delete-modal:hover {
+            background-color: #b91c1c;
+        }
+
+        .btn-cancel-modal {
+            background-color: #e8d9ca;
+            color: #654321;
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            flex: 1;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel-modal:hover {
+            background-color: #d4a574;
+        }
+
+        /* FINANCE MANAGEMENT */
+        .fm-filter-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .fm-filter {
+            flex: 1;
+            padding: 8px;
+            border: 2px solid #d4a574;
+            border-radius: 8px;
+            background-color: #f5ede0;
+            font-weight: 600;
+            font-size: 12px;
+            color: #a0826d;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .fm-filter.active {
+            background-color: #654321;
+            color: white;
+            border-color: #654321;
+        }
+
+        .fm-chart-container {
+            display: flex;
+            gap: 8px;
+            height: 200px;
+        }
+
+        .fm-y-axis {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #a0826d;
+            padding: 4px 0;
+            min-width: 30px;
+            text-align: right;
+        }
+
+        .fm-chart {
+            flex: 1;
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            border-bottom: 1px solid #e8d9ca;
+            border-left: 1px solid #e8d9ca;
+            padding: 4px 0 0 4px;
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .fm-bar-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            min-width: 30px;
+        }
+
+        .fm-bars {
+            display: flex;
+            gap: 2px;
+            align-items: flex-end;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .fm-bar {
+            width: 40%;
+            max-width: 16px;
+            border-radius: 3px 3px 0 0;
+            transition: height 0.3s;
+            min-height: 1px;
+        }
+
+        .fm-bar-revenue {
+            background-color: #16a34a;
+        }
+
+        .fm-bar-expense {
+            background-color: #dc2626;
+        }
+
+        .fm-bar-label {
+            font-size: 9px;
+            color: #a0826d;
+            margin-top: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 40px;
+            text-align: center;
+        }
+
+        .fm-profit-dot {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background-color: #eab308;
+            border-radius: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+        }
+
+        .fm-profit-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+
+        .fm-legend {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #654321;
+        }
+
+        .fm-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .fm-legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+
+        .fm-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .fm-summary-box {
+            padding: 16px 8px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .fm-revenue {
+            background-color: #dcfce7;
+            border: 2px solid #16a34a;
+        }
+
+        .fm-expense {
+            background-color: #fef2f2;
+            border: 2px solid #dc2626;
+        }
+
+        .fm-profit {
+            background-color: #fef9c3;
+            border: 2px solid #eab308;
+        }
+
+        .fm-summary-icon {
+            font-size: 20px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .fm-summary-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            color: #654321;
+            margin-bottom: 4px;
+        }
+
+        .fm-revenue .fm-summary-value {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #16a34a;
+        }
+
+        .fm-expense .fm-summary-value {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #dc2626;
+        }
+
+        .fm-profit .fm-summary-value {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #a16207;
+        }
+
+        /* MOBILE ADJUSTMENTS */
+        @media (max-width: 480px) {
+            .card-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .nav-item {
+                padding: 6px 4px;
+                font-size: 10px;
+            }
+
+            .nav-icon {
+                font-size: 20px;
+                width: 30px;
+                height: 30px;
+            }
+
+            header h1 {
+                font-size: 16px;
+            }
+
+            header p {
+                font-size: 10px;
+            }
+
+            .fin-tab-btn {
+                font-size: 13px;
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <header>
+            <div class="header-left">
+                <span class="emoji-icon">🚜</span>
+                <div>
+                    <h1>Quản Lý Trang Trại Gà</h1>
+                    <p>Trang Trại Gà Sạch Miền Tây</p>
+                </div>
+            </div>
+            <button class="btn-icon" onclick="showAlerts()">
+                🔔
+                <span class="alert-badge" id="alertCount" style="display: none;">2</span>
+            </button>
+        </header>
+
+        <!-- MAIN CONTENT -->
+        <main>
+            <!-- DASHBOARD TAB -->
+            <div id="dashboard" class="tab-content active">
+                <div class="card-grid">
+                    <div class="card card-success">
+                        <div class="card-header">
+                            <span style="font-size: 24px;">🐔</span>
+                            <span class="card-badge">Tổng đàn</span>
+                        </div>
+                        <h2 class="card-value">12.450</h2>
+                        <p class="card-label">Con khỏe mạnh</p>
+                    </div>
+
+                    <div class="card card-warning">
+                        <div class="card-header">
+                            <span style="font-size: 24px;">⚠️</span>
+                            <span class="card-badge">Cảnh báo</span>
+                        </div>
+                        <h2 class="card-value" id="alertCountCard">2</h2>
+                        <p class="card-label">Cần chú ý</p>
+                    </div>
+
+                    <div class="card card-default">
+                        <div class="card-header">
+                            <span style="font-size: 24px;">🌡️</span>
+                            <span style="font-size: 10px; background-color: #fef3c7; color: #b45309; padding: 4px 8px; border-radius: 8px; font-weight: 600;">Trung bình</span>
+                        </div>
+                        <h2 class="card-value" style="color: #654321;" id="avgTemp">28.5</h2>
+                        <p class="card-label" style="color: #a0826d;">Nhiệt độ trại</p>
+                    </div>
+
+                    <div class="card card-default">
+                        <div class="card-header">
+                            <span style="font-size: 24px;">💧</span>
+                            <span style="font-size: 10px; background-color: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 8px; font-weight: 600;">Trung bình</span>
+                        </div>
+                        <h2 class="card-value" style="color: #654321;" id="avgHum">65.0</h2>
+                        <p class="card-label" style="color: #a0826d;">Độ ẩm không khí</p>
+                    </div>
+                </div>
+
+                <h3 class="section-title">🏠 Danh sách chuồng nuôi</h3>
+                <div id="coopsList"></div>
+            </div>
+
+            <!-- COOPS TAB -->
+            <div id="coopsTab" class="tab-content">
+                <h2 class="section-title" style="font-size: 18px; margin-bottom: 12px;">🐔 Quản lý gà & Chuồng</h2>
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchInput" placeholder="Tìm kiếm chuồng...">
+                </div>
+                <div id="coopsSearchList"></div>
+            </div>
+
+            <!-- FINANCIAL TAB -->
+            <div id="financialTab" class="tab-content">
+                <!-- TAB THU/CHI -->
+                <div class="fin-tab-bar">
+                    <button class="fin-tab-btn active" onclick="switchFinTab('income')">💵 Thu</button>
+                    <button class="fin-tab-btn" onclick="switchFinTab('expense')">💸 Chi</button>
+                </div>
+
+                <!-- ═══ FORM THU ═══ -->
+                <div id="incomeForm" class="form-section">
+                    <div class="card card-default" style="padding: 16px;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Chọn chuồng</label>
+                                <select id="inc-coopId">
+                                    <option value="coop-1">Chuồng A1</option>
+                                    <option value="coop-2">Chuồng A2</option>
+                                    <option value="coop-3">Chuồng B1</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Ngày ghi nhận</label>
+                                <input type="date" id="inc-date" />
+                            </div>
+                        </div>
+
+                        <div class="form-divider"></div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Nguồn thu</label>
+                                <select id="inc-source">
+                                    <option value="Bán gà">Bán gà</option>
+                                    <option value="Bán trứng">Bán trứng</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Số lượng</label>
+                                <input type="number" id="inc-quantity" placeholder="0" oninput="calcTotal('income')" />
+                            </div>
+                            <div class="form-group">
+                                <label>Đơn giá (VNĐ)</label>
+                                <input type="number" id="inc-unitPrice" placeholder="0" oninput="calcTotal('income')" />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Ghi chú</label>
+                            <input type="text" id="inc-note" placeholder="Nhập ghi chú..." />
+                        </div>
+
+                        <div class="total-display">
+                            <div class="total-label">Tổng số tiền</div>
+                            <div class="total-value" id="inc-total">0 VNĐ</div>
+                        </div>
+
+                        <button class="btn-save-finance" onclick="saveRecord('income')">💾 Lưu dữ liệu</button>
+                    </div>
+                </div>
+
+                <!-- ═══ FORM CHI ═══ -->
+                <div id="expenseForm" class="form-section" style="display: none;">
+                    <div class="card card-default" style="padding: 16px;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Loại chi</label>
+                                <select id="exp-type" onchange="onExpenseTypeChange()">
+                                    <option value="Gà chết">Gà chết</option>
+                                    <option value="Thức ăn">Thức ăn</option>
+                                    <option value="Thuốc">Thuốc</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- FORM: GÀ CHẾT -->
+                        <div id="chiGaChet">
+                            <div class="form-divider"></div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Chọn chuồng</label>
+                                    <select id="exp-coopId">
+                                        <option value="coop-1">Chuồng A1</option>
+                                        <option value="coop-2">Chuồng A2</option>
+                                        <option value="coop-3">Chuồng B1</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Ngày ghi nhận</label>
+                                    <input type="date" id="exp-date1" />
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Số lượng</label>
+                                    <input type="number" id="exp-qty1" placeholder="0" oninput="calcTotal('exp1')" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Đơn giá (giá bán TH - VNĐ)</label>
+                                    <input type="number" id="exp-price1" placeholder="0" oninput="calcTotal('exp1')" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Ghi chú</label>
+                                <input type="text" id="exp-note1" placeholder="Nhập ghi chú..." />
+                            </div>
+                            <div class="total-display">
+                                <div class="total-label">Tổng số tiền chi</div>
+                                <div class="total-value" id="exp-total1" style="color: #dc2626;">0 VNĐ</div>
+                            </div>
+                            <button class="btn-save-finance" onclick="saveRecord('exp1')">💾 Lưu dữ liệu</button>
+                        </div>
+
+                        <!-- FORM: THỨC ĂN / THUỐC -->
+                        <div id="chiThucAnThuoc" style="display: none;">
+                            <div class="form-divider"></div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Số lượng</label>
+                                    <input type="number" id="exp-qty2" placeholder="0" oninput="calcTotal('exp2')" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Đơn giá (VNĐ)</label>
+                                    <input type="number" id="exp-price2" placeholder="0" oninput="calcTotal('exp2')" />
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Ngày ghi nhận</label>
+                                    <input type="date" id="exp-date2" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Ghi chú</label>
+                                <input type="text" id="exp-note2" placeholder="Nhập ghi chú..." />
+                            </div>
+                            <div class="total-display">
+                                <div class="total-label">Tổng số tiền chi</div>
+                                <div class="total-value" id="exp-total2" style="color: #dc2626;">0 VNĐ</div>
+                            </div>
+                            <button class="btn-save-finance" onclick="saveRecord('exp2')">💾 Lưu dữ liệu</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ DANH SÁCH 5 GẦN NHẤT ═══ -->
+                <div class="card card-default" style="padding: 16px; margin-top: 12px;">
+                    <div class="fin-list-header">
+                        <h3 style="font-size: 16px; font-weight: 700; color: #654321; margin: 0;">📋 Gần đây</h3>
+                        <button class="btn-history" onclick="showHistory()">☰</button>
+                    </div>
+                    <div id="recentRecords"></div>
+                </div>
+            </div>
+
+            <!-- FINANCE MANAGEMENT TAB -->
+            <div id="financeManagementTab" class="tab-content">
+                <!-- FILTER -->
+                <div class="fm-filter-bar">
+                    <button class="fm-filter active" onclick="setFMFilter(7)">7 ngày</button>
+                    <button class="fm-filter" onclick="setFMFilter(30)">30 ngày</button>
+                    <button class="fm-filter" onclick="setFMFilter(365)">12 tháng</button>
+                </div>
+
+                <!-- CHART -->
+                <div class="card card-default" style="padding: 16px;">
+                    <h3 style="font-size: 14px; font-weight: 700; color: #654321; margin-bottom: 12px;">📊 Biểu đồ doanh thu & chi tiêu</h3>
+                    <div class="fm-chart-container">
+                        <div class="fm-y-axis">
+                            <span id="fmYMax">0</span>
+                            <span id="fmYMid">0</span>
+                            <span>0</span>
+                        </div>
+                        <div class="fm-chart" id="fmChart"></div>
+                    </div>
+                    <div class="fm-legend">
+                        <span class="fm-legend-item"><span class="fm-legend-color" style="background:#16a34a;"></span>Thu</span>
+                        <span class="fm-legend-item"><span class="fm-legend-color" style="background:#dc2626;"></span>Chi</span>
+                        <span class="fm-legend-item"><span class="fm-legend-color" style="background:#eab308;"></span>Lợi nhuận</span>
+                    </div>
+                </div>
+
+                <!-- SUMMARY BOXES -->
+                <div class="fm-summary-grid">
+                    <div class="fm-summary-box fm-revenue">
+                        <span class="fm-summary-icon">💵</span>
+                        <span class="fm-summary-label">Tổng thu</span>
+                        <span class="fm-summary-value" id="fmTotalRevenue">0 VNĐ</span>
+                    </div>
+                    <div class="fm-summary-box fm-expense">
+                        <span class="fm-summary-icon">💸</span>
+                        <span class="fm-summary-label">Tổng chi</span>
+                        <span class="fm-summary-value" id="fmTotalExpense">0 VNĐ</span>
+                    </div>
+                    <div class="fm-summary-box fm-profit">
+                        <span class="fm-summary-icon">📈</span>
+                        <span class="fm-summary-label">Lợi nhuận</span>
+                        <span class="fm-summary-value" id="fmTotalProfit">0 VNĐ</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DETAIL TAB -->
+            <div id="detailView" class="tab-content detail-view"></div>
+
+            <!-- DEVICES TAB -->
+            <div id="devicesTab" class="tab-content">
+                <h2 class="section-title" style="font-size: 18px; margin-bottom: 12px;">⚙️ Danh sách Thiết bị</h2>
+                <div id="devicesList"></div>
+            </div>
+        </main>
+
+        <!-- MODAL ALERTS -->
+        <div id="alertsModal" class="modal-overlay">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <span>⚠️</span>
+                        Cảnh báo hệ thống
+                    </h3>
+                    <button class="close-btn" onclick="closeAlerts()">✕</button>
+                </div>
+                <div class="alerts-container" id="alertsList"></div>
+                <button class="btn-primary" onclick="closeAlerts()">Đã hiểu</button>
+            </div>
+        </div>
+
+        <!-- TOAST -->
+        <div id="toast" class="toast" style="display: none;"></div>
+
+        <!-- MODAL DELETE COOP -->
+        <div id="deleteCoopModal" class="modal-overlay">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <span>⚠️</span>
+                        Xóa dữ liệu chuồng
+                    </h3>
+                    <button class="close-btn" onclick="closeDeleteModal()">✕</button>
+                </div>
+                <div style="padding: 16px; text-align: center;">
+                    <p style="font-size: 14px; color: #654321; margin-bottom: 12px;">Nhập số dưới đây để xác nhận xóa:</p>
+                    <p id="confirmCode" class="confirm-code"></p>
+                    <input type="number" id="confirmInput" class="confirm-input" placeholder="Nhập mã xác nhận" />
+                    <p id="confirmError" style="color: #dc2626; font-size: 12px; margin: 8px 0; display: none;">Sai mã xác nhận!</p>
+                </div>
+                <div style="display: flex; gap: 8px; padding: 0 16px 16px;">
+                    <button class="btn-confirm-delete" onclick="executeDeleteData()">Xóa</button>
+                    <button class="btn-cancel-delete" onclick="closeDeleteModal()">Hủy</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL HISTORY -->
+        <div id="historyModal" class="modal-overlay">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 class="modal-title"><span>📋</span> Lịch sử giao dịch</h3>
+                    <button class="close-btn" onclick="closeHistory()">✕</button>
+                </div>
+                <div id="historyList" style="padding: 0 16px 16px; max-height: 400px; overflow-y: auto;"></div>
+            </div>
+        </div>
+
+        <!-- MODAL DETAIL -->
+        <div id="detailModal" class="modal-overlay">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 class="modal-title"><span>📋</span> Chi tiết giao dịch</h3>
+                    <button class="close-btn" onclick="closeDetail()">✕</button>
+                </div>
+                <div id="detailContent" style="padding: 0 16px;"></div>
+                <div style="display: flex; gap: 8px; padding: 12px 16px 16px;">
+                    <button class="btn-edit" onclick="editRecordFromDetail()">✏️ Sửa</button>
+                    <button class="btn-delete-modal" onclick="deleteRecordFromDetail()">🗑️ Xóa</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- NAVIGATION -->
+        <nav>
+            <button class="nav-item active" onclick="switchTab('dashboard')">
+                <div class="nav-icon">🏠</div>
+                <span>Trang chủ</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('coopsTab')">
+                <div class="nav-icon">🐔</div>
+                <span>Quản lý gà</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('financialTab')">
+                <div class="nav-icon">+</div>
+                <span>Tài chính</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('financeManagementTab')">
+                <div class="nav-icon">📊</div>
+                <span>Quản lí TC</span>
+            </button>
+            <button class="nav-item" onclick="switchTab('devicesTab')">
+                <div class="nav-icon">⚙️</div>
+                <span>Thiết bị</span>
+            </button>
+        </nav>
+    </div>
+
+    <script>
+        // DATA
+        const farmData = {
+            totalChickens: 12450,
+            avgTemperature: 28.5,
+            avgHumidity: 65.0,
+            alerts: [
+                { id: 1, coopName: "Chuồng Gà Thịt B2", message: "Độ ẩm cao (78%) - Đã bật quạt tăng cường", time: "11:05" },
+                { id: 2, coopName: "Chuồng Gà Thịt B2", message: "Mức thức ăn thấp (25%)", time: "09:40" }
+            ],
+            coops: [
+                {
+                    id: "coop-1",
+                    name: "Chuồng Gà Đẻ A1",
+                    chickens: 4200,
+                    temperature: 28.2,
+                    humidity: 62,
+                    foodLevel: 85,
+                    waterLevel: 90,
+                    status: "normal",
+                    devices: { fan: true, light: true, camera: true, feeder: false },
+                    stats: { dailyEggs: "3890 quả", mortalityRate: "0.02%", feedConsumption: "420 kg" },
+                    feedingSchedule: [
+                        { id: 1, time: "06:00", amount: "50", type: "Sáng" },
+                        { id: 2, time: "12:00", amount: "45", type: "Trưa" },
+                        { id: 3, time: "18:00", amount: "50", type: "Chiều" }
+                    ],
+                    thresholds: { tempMin: 20, tempMax: 35, humMin: 40, humMax: 80 },
+                    logs: [
+                        { time: "10:30", message: "Tự động kích hoạt quạt thông gió do nhiệt độ > 28°C" },
+                        { time: "08:15", message: "Hoàn tất chu kỳ cho ăn buổi sáng" }
+                    ]
+                },
+                {
+                    id: "coop-2",
+                    name: "Chuồng Gà Thịt B2",
+                    chickens: 5050,
+                    temperature: 31.8,
+                    humidity: 78,
+                    foodLevel: 25,
+                    waterLevel: 40,
+                    status: "warning",
+                    devices: { fan: true, light: false, camera: true, feeder: true },
+                    stats: { avgWeight: "1.85 kg", mortalityRate: "0.05%", feedConsumption: "550 kg" },
+                    feedingSchedule: [
+                        { id: 1, time: "05:30", amount: "60", type: "Sáng" },
+                        { id: 2, time: "11:30", amount: "55", type: "Trưa" },
+                        { id: 3, time: "17:30", amount: "60", type: "Chiều" }
+                    ],
+                    thresholds: { tempMin: 18, tempMax: 32, humMin: 35, humMax: 75 },
+                    logs: [
+                        { time: "11:05", message: "⚠️ Cảnh báo: Độ ẩm vượt ngưỡng cao (78%)" },
+                        { time: "09:40", message: "Mức thức ăn thấp dưới 30%" }
+                    ]
+                },
+                {
+                    id: "coop-3",
+                    name: "Chuồng Gà Con C3",
+                    chickens: 3200,
+                    temperature: 26.5,
+                    humidity: 60,
+                    foodLevel: 92,
+                    waterLevel: 95,
+                    status: "normal",
+                    devices: { fan: false, light: true, camera: true, feeder: false },
+                    stats: { avgWeight: "0.45 kg", mortalityRate: "0.01%", feedConsumption: "180 kg" },
+                    feedingSchedule: [
+                        { id: 1, time: "06:00", amount: "30", type: "Sáng" },
+                        { id: 2, time: "14:00", amount: "30", type: "Chiều" }
+                    ],
+                    thresholds: { tempMin: 22, tempMax: 30, humMin: 50, humMax: 70 },
+                    logs: [{ time: "08:00", message: "Kiểm tra sức khỏe đàn gà con: Đạt tiêu chuẩn" }]
+                }
+            ],
+            devicesList: [
+                { id: "dev-1", name: "Camera Giám Sát A1", type: "Camera", coop: "Chuồng Gà Đẻ A1", status: "online" },
+                { id: "dev-2", name: "Cảm Biến Nhiệt/Ẩm A1", type: "Sensor", coop: "Chuồng Gà Đẻ A1", status: "online" },
+                { id: "dev-3", name: "Hệ Thống Cho Ăn B2", type: "Feeder", coop: "Chuồng Gà Thịt B2", status: "warning" },
+                { id: "dev-4", name: "Quạt Thông Gió B2", type: "Fan", coop: "Chuồng Gà Thịt B2", status: "online" },
+                { id: "dev-5", name: "Camera Giám Sát C3", type: "Camera", coop: "Chuồng Gà Con C3", status: "online" }
+            ]
+        };
+
+        // FUNCTIONS
+        let fmFilterDays = 7;
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.target.closest('.nav-item').classList.add('active');
+
+            if (tabName === 'dashboard') {
+                renderDashboard();
+            } else if (tabName === 'coopsTab') {
+                renderCoopsList();
+            } else if (tabName === 'devicesTab') {
+                renderDevices();
+            } else if (tabName === 'financialTab') {
+                renderRecentRecords();
+            } else if (tabName === 'financeManagementTab') {
+                renderFinanceManagement();
+            }
+        }
+
+        function renderDashboard() {
+            const coopsList = document.getElementById('coopsList');
+            coopsList.innerHTML = farmData.coops.map(coop => {
+                const isWarning = coop.status === 'warning';
+                return `
+                    <div class="coop-card" onclick="showCoopDetail('${coop.id}')">
+                        <div class="coop-header">
+                            <div class="coop-name">
+                                <span class="status-dot ${isWarning ? 'warning' : ''}"></span>
+                                <h4>${coop.name}</h4>
+                            </div>
+                            <span style="font-size: 12px; font-weight: 600; color: ${isWarning ? '#c2410c' : '#16a34a'};">${isWarning ? 'Cảnh báo' : 'Bình thường'}</span>
+                        </div>
+                        <div class="coop-stats">
+                            <div>
+                                <p class="stat-item">Gà</p>
+                                <p class="stat-value">${(coop.chickens / 1000).toFixed(1)}K</p>
+                            </div>
+                            <div>
+                                <p class="stat-item">Nhiệt độ</p>
+                                <p class="stat-value">${coop.temperature}°C</p>
+                            </div>
+                            <div>
+                                <p class="stat-item">Độ ẩm</p>
+                                <p class="stat-value">${coop.humidity}%</p>
+                            </div>
+                            <div>
+                                <p class="stat-item">Thức ăn</p>
+                                <p class="stat-value">${coop.foodLevel}%</p>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: #a0826d; margin-bottom: 4px;">
+                            <span>🌾 Thức ăn: ${coop.foodLevel}%</span>
+                            <span>💧 Nước: ${coop.waterLevel}%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill ${coop.foodLevel < 30 ? 'warning' : ''}" style="width: ${coop.foodLevel}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderCoopsList() {
+            const searchTerm = document.getElementById('searchInput')?.value?.toLowerCase() || '';
+            const filtered = farmData.coops.filter(c => c.name.toLowerCase().includes(searchTerm));
+            
+            const list = document.getElementById('coopsSearchList');
+            list.innerHTML = filtered.map(coop => `
+                <div class="coop-card" style="display: flex; justify-content: space-between; align-items: center;" onclick="showCoopDetail('${coop.id}')">
+                    <div style="display: flex; gap: 12px; align-items: start; flex: 1;">
+                        <div style="width: 44px; height: 44px; border-radius: 8px; background-color: #fef3c7; display: flex; align-items: center; justify-content: center; font-size: 24px;">🐔</div>
+                        <div>
+                            <h4 style="font-size: 14px; font-weight: 700; color: #654321; margin: 0;">${coop.name}</h4>
+                            <p style="font-size: 12px; color: #a0826d; margin: 4px 0 0 0;">Số lượng: ${coop.chickens.toLocaleString()} con</p>
+                            <div style="display: flex; gap: 8px; margin-top: 4px;">
+                                <span style="font-size: 11px; background-color: #e8d9ca; color: #654321; padding: 2px 6px; border-radius: 4px; font-weight: 600;">🌡️ ${coop.temperature}°C</span>
+                                <span style="font-size: 11px; background-color: #e8d9ca; color: #654321; padding: 2px 6px; border-radius: 4px; font-weight: 600;">💧 ${coop.humidity}%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <span style="font-size: 18px;">→</span>
+                </div>
+            `).join('');
+        }
+
+        function showCoopDetail(coopId) {
+            const coop = farmData.coops.find(c => c.id === coopId);
+            if (!coop) return;
+
+            const detailView = document.getElementById('detailView');
+            detailView.innerHTML = `
+                <button class="back-btn" onclick="backToDashboard()">← Quay lại</button>
+                
+                <div class="camera-grid">
+                    <div class="camera-view">
+                        <div class="camera-status">
+                            <span class="dot ${coop.devices.camera ? 'online' : 'offline'}"></span>
+                            <span>${coop.devices.camera ? '🟢 Trực tiếp' : '⚫ Đã tắt'}</span>
+                        </div>
+                        <div class="camera-feed">
+                            ${coop.devices.camera ? '📹 Camera 1 hoạt động' : '📹 Camera 1 tắt'}
+                        </div>
+                    </div>
+                    <div class="camera-view">
+                        <div class="camera-status">
+                            <span class="dot ${coop.devices.camera ? 'online' : 'offline'}"></span>
+                            <span>${coop.devices.camera ? '🟢 Trực tiếp' : '⚫ Đã tắt'}</span>
+                        </div>
+                        <div class="camera-feed">
+                            ${coop.devices.camera ? '📹 Camera 2 hoạt động' : '📹 Camera 2 tắt'}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-grid">
+                    <div class="card card-default">
+                        <span style="font-size: 24px; margin-bottom: 8px; display: block;">🌡️</span>
+                        <p style="font-size: 11px; color: #a0826d; margin: 0;">Nhiệt độ</p>
+                        <p style="font-size: 18px; font-weight: 700; color: #654321; margin: 0;">${coop.temperature}°C</p>
+                    </div>
+                    <div class="card card-default">
+                        <span style="font-size: 24px; margin-bottom: 8px; display: block;">💧</span>
+                        <p style="font-size: 11px; color: #a0826d; margin: 0;">Độ ẩm</p>
+                        <p style="font-size: 18px; font-weight: 700; color: #654321; margin: 0;">${coop.humidity}%</p>
+                    </div>
+                    <div class="card card-default">
+                        <span style="font-size: 24px; margin-bottom: 8px; display: block;">🌾</span>
+                        <p style="font-size: 11px; color: #a0826d; margin: 0;">Thức ăn</p>
+                        <p style="font-size: 18px; font-weight: 700; color: #654321; margin: 0;">${coop.foodLevel}%</p>
+                    </div>
+                    <div class="card card-default">
+                        <span style="font-size: 24px; margin-bottom: 8px; display: block;">💧</span>
+                        <p style="font-size: 11px; color: #a0826d; margin: 0;">Nước uống</p>
+                        <p style="font-size: 18px; font-weight: 700; color: #654321; margin: 0;">${coop.waterLevel}%</p>
+                    </div>
+                </div>
+
+                <h3 class="section-title">⚙️ Điều khiển Thiết bị</h3>
+                <div class="device-grid">
+                    ${renderDeviceToggles(coop)}
+                </div>
+
+                <!-- LỊCH CHO ĂN UỐNG -->
+                <div class="feed-schedule">
+                    <div class="feed-schedule-header">
+                        <h3 class="section-title" style="margin: 0;">🍽️ Lịch cho ăn uống</h3>
+                        <button class="btn-add" onclick="toggleAddFeedForm('${coop.id}')">+</button>
+                    </div>
+
+                    <div id="addFeedForm-${coop.id}" class="feed-form hidden">
+                        <div class="feed-form-row">
+                            <div class="feed-form-group">
+                                <label>Loại</label>
+                                <select id="feedType-${coop.id}">
+                                    <option value="Sáng">Sáng</option>
+                                    <option value="Trưa">Trưa</option>
+                                    <option value="Chiều">Chiều</option>
+                                    <option value="Tối">Tối</option>
+                                </select>
+                            </div>
+                            <div class="feed-form-group">
+                                <label>Giờ</label>
+                                <input type="time" id="feedTime-${coop.id}" />
+                            </div>
+                            <div class="feed-form-group">
+                                <label>Lượng (kg)</label>
+                                <input type="number" id="feedAmount-${coop.id}" placeholder="50" />
+                            </div>
+                        </div>
+                        <button class="btn-save-feed" onclick="addFeedSchedule('${coop.id}')">Thêm lịch</button>
+                    </div>
+
+                    <div class="feed-list">
+                        ${coop.feedingSchedule.length > 0 ? coop.feedingSchedule.map(schedule => `
+                            <div class="feed-item">
+                                <div class="feed-item-info">
+                                    <span class="feed-time">⏰ ${schedule.time}</span>
+                                    <span class="feed-type">${schedule.type}</span>
+                                    <span class="feed-amount">${schedule.amount} kg</span>
+                                </div>
+                                <button class="btn-remove-feed" onclick="removeFeedSchedule('${coop.id}', ${schedule.id})">✕</button>
+                            </div>
+                        `).join('') : '<p style="text-align: center; color: #a0826d; font-size: 13px; padding: 12px 0;">Chưa có lịch cho ăn</p>'}
+                    </div>
+                </div>
+
+                <!-- MỨC CẢNH BÁO -->
+                <div class="threshold-settings">
+                    <h3 class="section-title">⚠️ Mức cảnh báo</h3>
+
+                    <div class="threshold-section">
+                        <p class="threshold-label">🌡️ Nhiệt độ (°C)</p>
+                        <div class="threshold-row">
+                            <div class="threshold-input">
+                                <label>Min</label>
+                                <input type="number" id="tempMin-${coop.id}" value="${coop.thresholds.tempMin}" />
+                            </div>
+                            <div class="threshold-input">
+                                <label>Max</label>
+                                <input type="number" id="tempMax-${coop.id}" value="${coop.thresholds.tempMax}" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="threshold-section">
+                        <p class="threshold-label">💧 Độ ẩm (%)</p>
+                        <div class="threshold-row">
+                            <div class="threshold-input">
+                                <label>Min</label>
+                                <input type="number" id="humMin-${coop.id}" value="${coop.thresholds.humMin}" />
+                            </div>
+                            <div class="threshold-input">
+                                <label>Max</label>
+                                <input type="number" id="humMax-${coop.id}" value="${coop.thresholds.humMax}" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn-save-threshold" onclick="saveThresholds('${coop.id}')">Lưu mức cảnh báo</button>
+                </div>
+
+                <div class="card card-default" style="padding: 16px;">
+                    <h3 class="section-title" style="margin-bottom: 12px;">📊 Thống kê</h3>
+                    <div class="stats-grid">
+                        ${Object.entries(coop.stats).map(([key, val]) => `
+                            <div class="stats-item">
+                                <p style="font-size: 10px; color: #a0826d; margin: 0;">${key === 'dailyEggs' ? 'Trứng' : key === 'mortalityRate' ? 'Tỷ lệ chết' : 'Thức ăn/Kg'}</p>
+                                <p style="font-size: 12px; font-weight: 700; color: #654321; margin: 4px 0 0 0;">${val}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <p style="font-size: 11px; font-weight: 600; color: #654321; margin: 12px 0 8px 0;">Nhật ký hôm nay:</p>
+                    ${coop.logs.map(log => `
+                        <div class="log-item">
+                            <span class="log-time">${log.time}</span>
+                            <span class="log-message">${log.message}</span>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <button class="btn-delete-data" onclick="confirmDeleteCoopData('${coop.id}')">🗑️ Xóa dữ liệu chuồng</button>
+            `;
+            detailView.classList.add('active');
+            document.getElementById('dashboard').classList.remove('active');
+            document.getElementById('coopsTab').classList.remove('active');
+            document.getElementById('devicesTab').classList.remove('active');
+        }
+
+        function renderDeviceToggles(coop) {
+            const devices = [
+                { key: 'fan', label: 'Quạt thông gió', icon: '💨' },
+                { key: 'light', label: 'Đèn sưởi', icon: '💡' },
+                { key: 'camera', label: 'Camera', icon: '📷' },
+                { key: 'feeder', label: 'Máy cho ăn', icon: '🌾' }
+            ];
+
+            return devices.map(device => `
+                <div class="device-toggle">
+                    <div class="device-label">
+                        <span style="font-size: 18px;">${device.icon}</span>
+                        <div>
+                            <p class="device-name">${device.label}</p>
+                            <p class="device-status">${coop.devices[device.key] ? 'Bật' : 'Tắt'}</p>
+                        </div>
+                    </div>
+                    <button class="toggle-switch ${coop.devices[device.key] ? 'active' : ''}" onclick="toggleDevice('${coop.id}', '${device.key}')">
+                        <div class="toggle-thumb"></div>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function toggleDevice(coopId, deviceKey) {
+            const coop = farmData.coops.find(c => c.id === coopId);
+            coop.devices[deviceKey] = !coop.devices[deviceKey];
+            
+            const deviceNames = { fan: 'Quạt', light: 'Đèn', camera: 'Camera', feeder: 'Hệ thống ăn' };
+            showToast(`Đã ${coop.devices[deviceKey] ? 'BẬT' : 'TẮT'} ${deviceNames[deviceKey]}`);
+            
+            showCoopDetail(coopId);
+        }
+
+        function toggleAddFeedForm(coopId) {
+            const form = document.getElementById('addFeedForm-' + coopId);
+            if (form) {
+                form.classList.toggle('hidden');
+            }
+        }
+
+        function addFeedSchedule(coopId) {
+            const coop = farmData.coops.find(c => c.id === coopId);
+            const typeSelect = document.getElementById('feedType-' + coopId);
+            const timeInput = document.getElementById('feedTime-' + coopId);
+            const amountInput = document.getElementById('feedAmount-' + coopId);
+
+            if (!timeInput.value || !amountInput.value) {
+                showToast('Vui lòng nhập đầy đủ thông tin');
+                return;
+            }
+
+            const newId = Math.max(0, ...coop.feedingSchedule.map(s => s.id)) + 1;
+            coop.feedingSchedule.push({
+                id: newId,
+                time: timeInput.value,
+                amount: amountInput.value,
+                type: typeSelect.value
+            });
+
+            showToast('Đã thêm lịch cho ăn mới');
+            showCoopDetail(coopId);
+        }
+
+        function removeFeedSchedule(coopId, scheduleId) {
+            const coop = farmData.coops.find(c => c.id === coopId);
+            coop.feedingSchedule = coop.feedingSchedule.filter(s => s.id !== scheduleId);
+            showToast('Đã xóa lịch cho ăn');
+            showCoopDetail(coopId);
+        }
+
+        function saveThresholds(coopId) {
+            const coop = farmData.coops.find(c => c.id === coopId);
+            const tempMin = parseInt(document.getElementById('tempMin-' + coopId).value);
+            const tempMax = parseInt(document.getElementById('tempMax-' + coopId).value);
+            const humMin = parseInt(document.getElementById('humMin-' + coopId).value);
+            const humMax = parseInt(document.getElementById('humMax-' + coopId).value);
+
+            coop.thresholds = { tempMin, tempMax, humMin, humMax };
+            showToast('Đã lưu mức cảnh báo');
+        }
+
+        function renderDevices() {
+            const devicesList = document.getElementById('devicesList');
+            devicesList.innerHTML = farmData.devicesList.map(dev => {
+                const statusColor = dev.status === 'online' ? '#d1fae5' : dev.status === 'warning' ? '#fef3c7' : '#fee2e2';
+                const statusTextColor = dev.status === 'online' ? '#065f46' : dev.status === 'warning' ? '#92400e' : '#7f1d1d';
+                const statusEmoji = dev.status === 'online' ? '🟢' : dev.status === 'warning' ? '🟡' : '🔴';
+                const statusText = dev.status === 'online' ? 'Hoạt động' : dev.status === 'warning' ? 'Cần kiểm tra' : 'Offline';
+                const icon = dev.type === 'Camera' ? '📷' : dev.type === 'Sensor' ? '🌡️' : '🌾';
+
+                return `
+                    <div class="device-card">
+                        <div class="device-info">
+                            <div class="device-icon">${icon}</div>
+                            <div>
+                                <h4 class="device-name">${dev.name}</h4>
+                                <p class="device-status">${dev.coop}</p>
+                            </div>
+                        </div>
+                        <div style="padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; background-color: ${statusColor}; color: ${statusTextColor};">
+                            ${statusEmoji} ${statusText}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showAlerts() {
+            document.getElementById('alertsModal').classList.add('active');
+            const alertsList = document.getElementById('alertsList');
+            alertsList.innerHTML = farmData.alerts.map(alert => `
+                <div class="alert-item">
+                    <div class="alert-header">
+                        <span class="alert-coop">${alert.coopName}</span>
+                        <span class="alert-time">${alert.time}</span>
+                    </div>
+                    <p class="alert-message">${alert.message}</p>
+                </div>
+            `).join('');
+        }
+
+        function closeAlerts() {
+            document.getElementById('alertsModal').classList.remove('active');
+        }
+
+        function backToDashboard() {
+            document.getElementById('dashboard').classList.add('active');
+            document.getElementById('detailView').classList.remove('active');
+        }
+
+        // FINANCIAL DATA
+        const coopNames = { 'coop-1': 'Chuồng A1', 'coop-2': 'Chuồng A2', 'coop-3': 'Chuồng B1' };
+        let financialRecords = [];
+        let editingRecordId = null;
+
+        function switchFinTab(type) {
+            document.querySelectorAll('.fin-tab-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('incomeForm').style.display = type === 'income' ? 'block' : 'none';
+            document.getElementById('expenseForm').style.display = type === 'expense' ? 'block' : 'none';
+        }
+
+        function onExpenseTypeChange() {
+            const t = document.getElementById('exp-type').value;
+            document.getElementById('chiGaChet').style.display = t === 'Gà chết' ? 'block' : 'none';
+            document.getElementById('chiThucAnThuoc').style.display = t !== 'Gà chết' ? 'block' : 'none';
+        }
+
+        function calcTotal(formType) {
+            let qty, price, el;
+            if (formType === 'income') {
+                qty = parseFloat(document.getElementById('inc-quantity').value) || 0;
+                price = parseFloat(document.getElementById('inc-unitPrice').value) || 0;
+                el = document.getElementById('inc-total');
+            } else if (formType === 'exp1') {
+                qty = parseFloat(document.getElementById('exp-qty1').value) || 0;
+                price = parseFloat(document.getElementById('exp-price1').value) || 0;
+                el = document.getElementById('exp-total1');
+            } else {
+                qty = parseFloat(document.getElementById('exp-qty2').value) || 0;
+                price = parseFloat(document.getElementById('exp-price2').value) || 0;
+                el = document.getElementById('exp-total2');
+            }
+            el.textContent = (qty * price).toLocaleString('vi-VN') + ' VNĐ';
+        }
+
+        function saveRecord(formType) {
+            const now = new Date().toISOString();
+            let record = { id: Date.now(), createdAt: now };
+
+            if (formType === 'income') {
+                const coopId = document.getElementById('inc-coopId').value;
+                const date = document.getElementById('inc-date').value;
+                const source = document.getElementById('inc-source').value;
+                const qty = parseInt(document.getElementById('inc-quantity').value) || 0;
+                const price = parseFloat(document.getElementById('inc-unitPrice').value) || 0;
+                const note = document.getElementById('inc-note').value;
+                if (!date) { showToast('Vui lòng chọn ngày!'); return; }
+                Object.assign(record, { type: 'income', coopId, coopName: coopNames[coopId], date, source, quantity: qty, unitPrice: price, total: qty * price, note });
+                document.getElementById('inc-quantity').value = '';
+                document.getElementById('inc-unitPrice').value = '';
+                document.getElementById('inc-note').value = '';
+                calcTotal('income');
+            } else if (formType === 'exp1') {
+                const coopId = document.getElementById('exp-coopId').value;
+                const date = document.getElementById('exp-date1').value;
+                const qty = parseInt(document.getElementById('exp-qty1').value) || 0;
+                const price = parseFloat(document.getElementById('exp-price1').value) || 0;
+                const note = document.getElementById('exp-note1').value;
+                if (!date) { showToast('Vui lòng chọn ngày!'); return; }
+                Object.assign(record, { type: 'expense', expenseType: 'Gà chết', coopId, coopName: coopNames[coopId], date, quantity: qty, unitPrice: price, total: qty * price, note });
+                document.getElementById('exp-qty1').value = '';
+                document.getElementById('exp-price1').value = '';
+                document.getElementById('exp-note1').value = '';
+                calcTotal('exp1');
+            } else {
+                const expType = document.getElementById('exp-type').value;
+                const date = document.getElementById('exp-date2').value;
+                const qty = parseInt(document.getElementById('exp-qty2').value) || 0;
+                const price = parseFloat(document.getElementById('exp-price2').value) || 0;
+                const note = document.getElementById('exp-note2').value;
+                if (!date) { showToast('Vui lòng chọn ngày!'); return; }
+                Object.assign(record, { type: 'expense', expenseType: expType, coopId: null, date, quantity: qty, unitPrice: price, total: qty * price, note });
+                document.getElementById('exp-qty2').value = '';
+                document.getElementById('exp-price2').value = '';
+                document.getElementById('exp-note2').value = '';
+                calcTotal('exp2');
+            }
+
+            financialRecords.push(record);
+            showToast(editingRecordId ? 'Đã cập nhật!' : 'Đã lưu dữ liệu!');
+            editingRecordId = null;
+            renderRecentRecords();
+        }
+
+        function renderRecentRecords() {
+            const list = document.getElementById('recentRecords');
+            const sorted = [...financialRecords].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            const recent = sorted.slice(0, 5);
+            if (recent.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: #a0826d; padding: 20px;">Chưa có dữ liệu</p>';
+                return;
+            }
+            list.innerHTML = recent.map(r => {
+                const isIncome = r.type === 'income';
+                const typeLabel = isIncome ? 'Thu' : 'Chi';
+                const typeClass = isIncome ? 'type-income' : 'type-expense';
+                const subtitle = isIncome ? `${r.source} · ${r.coopName}` : `${r.expenseType}${r.coopName ? ' · ' + r.coopName : ''}`;
+                return `
+                    <div class="fin-record-card" onclick="showRecordDetail(${r.id})">
+                        <div class="fin-card-header">
+                            <div class="fin-card-info">
+                                <span class="fin-card-type ${typeClass}">${typeLabel}</span>
+                                <span style="font-size: 13px; font-weight: 600; color: #654321;">${subtitle}</span>
+                            </div>
+                            <span class="fin-card-total" style="color: ${isIncome ? '#16a34a' : '#dc2626'};">${isIncome ? '+' : '-'}${r.total.toLocaleString('vi-VN')}đ</span>
+                        </div>
+                        <div class="fin-card-details">
+                            <span>${r.date}</span>
+                            <span>SL: ${r.quantity}</span>
+                            <span>ĐG: ${r.unitPrice.toLocaleString('vi-VN')}đ</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showHistory() {
+            const modal = document.getElementById('historyModal');
+            const list = document.getElementById('historyList');
+            const sorted = [...financialRecords].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            if (sorted.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: #a0826d; padding: 20px;">Chưa có dữ liệu</p>';
+            } else {
+                list.innerHTML = sorted.map(r => {
+                    const isIncome = r.type === 'income';
+                    const typeLabel = isIncome ? 'Thu' : 'Chi';
+                    const typeClass = isIncome ? 'type-income' : 'type-expense';
+                    const subtitle = isIncome ? `${r.source} · ${r.coopName}` : `${r.expenseType}${r.coopName ? ' · ' + r.coopName : ''}`;
+                    return `
+                        <div class="fin-record-card" onclick="closeHistory(); showRecordDetail(${r.id})">
+                            <div class="fin-card-header">
+                                <div class="fin-card-info">
+                                    <span class="fin-card-type ${typeClass}">${typeLabel}</span>
+                                    <span style="font-size: 13px; font-weight: 600; color: #654321;">${subtitle}</span>
+                                </div>
+                                <span class="fin-card-total" style="color: ${isIncome ? '#16a34a' : '#dc2626'};">${isIncome ? '+' : '-'}${r.total.toLocaleString('vi-VN')}đ</span>
+                            </div>
+                            <div class="fin-card-details">
+                                <span>${r.date}</span>
+                                <span>SL: ${r.quantity}</span>
+                                <span>ĐG: ${r.unitPrice.toLocaleString('vi-VN')}đ</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            modal.classList.add('active');
+        }
+
+        function closeHistory() {
+            document.getElementById('historyModal').classList.remove('active');
+        }
+
+        function showRecordDetail(id) {
+            const r = financialRecords.find(x => x.id === id);
+            if (!r) return;
+            const isIncome = r.type === 'income';
+            const modal = document.getElementById('detailModal');
+            const content = document.getElementById('detailContent');
+
+            let rows = '';
+            rows += `<div class="detail-row"><span class="detail-label">Loại</span><span class="detail-value" style="color: ${isIncome ? '#16a34a' : '#dc2626'};">${isIncome ? '💵 Thu nhập' : '💸 Chi tiêu'}</span></div>`;
+            if (isIncome) {
+                rows += `<div class="detail-row"><span class="detail-label">Nguồn thu</span><span class="detail-value">${r.source}</span></div>`;
+                rows += `<div class="detail-row"><span class="detail-label">Chuồng</span><span class="detail-value">${r.coopName}</span></div>`;
+            } else {
+                rows += `<div class="detail-row"><span class="detail-label">Loại chi</span><span class="detail-value">${r.expenseType}</span></div>`;
+                if (r.coopName) rows += `<div class="detail-row"><span class="detail-label">Chuồng</span><span class="detail-value">${r.coopName}</span></div>`;
+            }
+            rows += `<div class="detail-row"><span class="detail-label">Ngày</span><span class="detail-value">${r.date}</span></div>`;
+            rows += `<div class="detail-row"><span class="detail-label">Số lượng</span><span class="detail-value">${r.quantity}</span></div>`;
+            rows += `<div class="detail-row"><span class="detail-label">Đơn giá</span><span class="detail-value">${r.unitPrice.toLocaleString('vi-VN')} VNĐ</span></div>`;
+            rows += `<div class="detail-row"><span class="detail-label">Tổng</span><span class="detail-value" style="font-size: 16px; font-weight: 700; color: ${isIncome ? '#16a34a' : '#dc2626'};">${r.total.toLocaleString('vi-VN')} VNĐ</span></div>`;
+            if (r.note) rows += `<div class="detail-row"><span class="detail-label">Ghi chú</span><span class="detail-value">${r.note}</span></div>`;
+
+            content.innerHTML = rows;
+            modal.dataset.recordId = id;
+            modal.classList.add('active');
+        }
+
+        function closeDetail() {
+            document.getElementById('detailModal').classList.remove('active');
+        }
+
+        function editRecordFromDetail() {
+            const id = parseInt(document.getElementById('detailModal').dataset.recordId);
+            const r = financialRecords.find(x => x.id === id);
+            if (!r) return;
+            editingRecordId = id;
+            closeDetail();
+
+            if (r.type === 'income') {
+                switchTab('financialTab');
+                document.querySelectorAll('.fin-tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.fin-tab-btn')[0].classList.add('active');
+                document.getElementById('incomeForm').style.display = 'block';
+                document.getElementById('expenseForm').style.display = 'none';
+                document.getElementById('inc-coopId').value = r.coopId;
+                document.getElementById('inc-date').value = r.date;
+                document.getElementById('inc-source').value = r.source;
+                document.getElementById('inc-quantity').value = r.quantity;
+                document.getElementById('inc-unitPrice').value = r.unitPrice;
+                document.getElementById('inc-note').value = r.note || '';
+                calcTotal('income');
+            } else {
+                switchTab('financialTab');
+                document.querySelectorAll('.fin-tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.fin-tab-btn')[1].classList.add('active');
+                document.getElementById('incomeForm').style.display = 'none';
+                document.getElementById('expenseForm').style.display = 'block';
+                document.getElementById('exp-type').value = r.expenseType;
+                onExpenseTypeChange();
+                if (r.expenseType === 'Gà chết') {
+                    document.getElementById('exp-coopId').value = r.coopId;
+                    document.getElementById('exp-date1').value = r.date;
+                    document.getElementById('exp-qty1').value = r.quantity;
+                    document.getElementById('exp-price1').value = r.unitPrice;
+                    document.getElementById('exp-note1').value = r.note || '';
+                    calcTotal('exp1');
+                } else {
+                    document.getElementById('exp-date2').value = r.date;
+                    document.getElementById('exp-qty2').value = r.quantity;
+                    document.getElementById('exp-price2').value = r.unitPrice;
+                    document.getElementById('exp-note2').value = r.note || '';
+                    calcTotal('exp2');
+                }
+            }
+            financialRecords = financialRecords.filter(x => x.id !== id);
+            renderRecentRecords();
+        }
+
+        function deleteRecordFromDetail() {
+            const id = parseInt(document.getElementById('detailModal').dataset.recordId);
+            if (!confirm('Bạn có chắc muốn xóa?')) return;
+            financialRecords = financialRecords.filter(x => x.id !== id);
+            closeDetail();
+            showToast('Đã xóa dữ liệu!');
+            renderRecentRecords();
+        }
+
+        // FINANCE MANAGEMENT
+        function setFMFilter(days) {
+            fmFilterDays = days;
+            document.querySelectorAll('.fm-filter').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            renderFinanceManagement();
+        }
+
+        function renderFinanceManagement() {
+            const now = new Date();
+            const cutoff = new Date(now.getTime() - fmFilterDays * 24 * 60 * 60 * 1000);
+            const filtered = financialRecords.filter(r => new Date(r.date) >= cutoff);
+
+            const totalRevenue = filtered.filter(r => r.type === 'income').reduce((s, r) => s + r.total, 0);
+            const totalExpense = filtered.filter(r => r.type === 'expense').reduce((s, r) => s + r.total, 0);
+            const totalProfit = totalRevenue - totalExpense;
+
+            document.getElementById('fmTotalRevenue').textContent = totalRevenue.toLocaleString('vi-VN') + ' VNĐ';
+            document.getElementById('fmTotalExpense').textContent = totalExpense.toLocaleString('vi-VN') + ' VNĐ';
+            document.getElementById('fmTotalProfit').textContent = totalProfit.toLocaleString('vi-VN') + ' VNĐ';
+
+            const grouped = groupFinanceByDate(filtered, fmFilterDays);
+            renderFMChart(grouped);
+        }
+
+        function groupFinanceByDate(records, days) {
+            const groups = {};
+            const now = new Date();
+
+            if (days <= 30) {
+                for (let i = days - 1; i >= 0; i--) {
+                    const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+                    const key = d.toISOString().split('T')[0];
+                    const label = d.getDate() + '/' + (d.getMonth() + 1);
+                    groups[key] = { label, revenue: 0, expense: 0 };
+                }
+                records.forEach(r => {
+                    const key = r.date.split('T')[0];
+                    if (groups[key]) {
+                        if (r.type === 'income') groups[key].revenue += r.total;
+                        else groups[key].expense += r.total;
+                    }
+                });
+            } else {
+                const monthNames = ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'];
+                for (let i = 11; i >= 0; i--) {
+                    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+                    groups[key] = { label: monthNames[d.getMonth()], revenue: 0, expense: 0 };
+                }
+                records.forEach(r => {
+                    const d = new Date(r.date);
+                    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+                    if (groups[key]) {
+                        if (r.type === 'income') groups[key].revenue += r.total;
+                        else groups[key].expense += r.total;
+                    }
+                });
+            }
+
+            return Object.values(groups);
+        }
+
+        function renderFMChart(grouped) {
+            const chart = document.getElementById('fmChart');
+            if (grouped.length === 0) {
+                chart.innerHTML = '<p style="text-align: center; color: #a0826d; padding: 40px 0; width: 100%;">Chưa có dữ liệu</p>';
+                document.getElementById('fmYMax').textContent = '0';
+                document.getElementById('fmYMid').textContent = '0';
+                return;
+            }
+
+            const maxVal = Math.max(...grouped.map(g => Math.max(g.revenue, g.expense)), 1);
+            const chartHeight = 180;
+
+            document.getElementById('fmYMax').textContent = formatShortNumber(maxVal);
+            document.getElementById('fmYMid').textContent = formatShortNumber(maxVal / 2);
+
+            chart.innerHTML = grouped.map(g => {
+                const revH = (g.revenue / maxVal) * chartHeight;
+                const expH = (g.expense / maxVal) * chartHeight;
+                return `
+                    <div class="fm-bar-group">
+                        <div class="fm-bars">
+                            <div class="fm-bar fm-bar-revenue" style="height: ${revH}px;" title="Thu: ${g.revenue.toLocaleString('vi-VN')}đ"></div>
+                            <div class="fm-bar fm-bar-expense" style="height: ${expH}px;" title="Chi: ${g.expense.toLocaleString('vi-VN')}đ"></div>
+                        </div>
+                        <span class="fm-bar-label">${g.label}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function formatShortNumber(num) {
+            if (num >= 1000000000) return (num / 1000000000).toFixed(1) + ' tỷ';
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + ' tr';
+            if (num >= 1000) return (num / 1000).toFixed(0) + 'K';
+            return num.toLocaleString('vi-VN');
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+
+        // DELETE COOP DATA
+        let deleteTarget = null;
+        let confirmCode = 0;
+
+        function confirmDeleteCoopData(coopId) {
+            confirmCode = Math.floor(1000 + Math.random() * 9000);
+            deleteTarget = coopId;
+            document.getElementById('confirmCode').textContent = confirmCode;
+            document.getElementById('confirmInput').value = '';
+            document.getElementById('confirmError').style.display = 'none';
+            document.getElementById('deleteCoopModal').classList.add('active');
+        }
+
+        function executeDeleteData() {
+            const input = parseInt(document.getElementById('confirmInput').value);
+            if (input !== confirmCode) {
+                document.getElementById('confirmError').style.display = 'block';
+                return;
+            }
+            const coop = farmData.coops.find(c => c.id === deleteTarget);
+            if (coop) {
+                coop.chickens = 0;
+                coop.stats = {};
+                coop.logs = [];
+                showToast('Đã xóa dữ liệu chuồng');
+            }
+            closeDeleteModal();
+            showCoopDetail(deleteTarget);
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteCoopModal').classList.remove('active');
+            document.getElementById('confirmInput').value = '';
+            document.getElementById('confirmError').style.display = 'none';
+            deleteTarget = null;
+        }
+
+        // INIT
+        document.getElementById('searchInput')?.addEventListener('input', renderCoopsList);
+        renderDashboard();
+        renderDevices();
+        renderRecentRecords();
+
+        // Set default date for financial forms
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('inc-date').value = today;
+        document.getElementById('exp-date1').value = today;
+        document.getElementById('exp-date2').value = today;
+
+        // SIMULATION: Update data every 4 seconds
+        setInterval(() => {
+            farmData.coops.forEach(coop => {
+                coop.temperature = parseFloat((coop.temperature + (Math.random() - 0.5) * 0.4).toFixed(1));
+                coop.humidity = Math.min(100, Math.max(30, Math.round(coop.humidity + (Math.random() - 0.5))));
+            });
+            
+            const temps = farmData.coops.map(c => c.temperature);
+            const hums = farmData.coops.map(c => c.humidity);
+            farmData.avgTemperature = parseFloat((temps.reduce((a, b) => a + b) / temps.length).toFixed(1));
+            farmData.avgHumidity = parseFloat((hums.reduce((a, b) => a + b) / hums.length).toFixed(1));
+
+            document.getElementById('avgTemp').textContent = farmData.avgTemperature;
+            document.getElementById('avgHum').textContent = farmData.avgHumidity;
+        }, 4000);
+    </script>
+</body>
+</html>
