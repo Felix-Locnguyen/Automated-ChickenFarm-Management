@@ -21,4 +21,5 @@ class Flock(Base):
     devices = relationship("Device", back_populates="flock")
     feeding_logs = relationship("FeedingLog", back_populates="flock")
     health_records = relationship("HealthRecord", back_populates="flock")
+    financial_records = relationship("FinancialRecord", back_populates="flock")
     alerts = relationship("Alert", back_populates="flock")
