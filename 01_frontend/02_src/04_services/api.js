@@ -1,23 +1,140 @@
-const API_BASE = '/api';
+/**
+ * Gọi API backend — mỗi hàm ứng với 1 endpoint.
+ * Quy ước chung: hàm nào cần đăng nhập thì tự gắn JWT vào header.
+ */
+import { getToken, logout } from './auth';
 
-export async function fetchFarmData() {
-  const response = await fetch(`${API_BASE}/farm-data`);
-  if (!response.ok) throw new Error('Failed to fetch farm data');
-  return response.json();
-}
+const API_BASE = '/api'
+/**
+  - hàm bọc chung cho mọi request - tránh lặp code
+  - Tự gắn header Content-Type + Authorization
+  - Tự xử lý 401 (token hết hạn → đăng xuất luôn)
+  - Tự parse JSON
+ */
 
-export async function fetchCoops() {
-  const response = await fetch(`${API_BASE}/coops`);
-  if (!response.ok) throw new Error('Failed to fetch coops');
-  return response.json();
-}
+// Khai báo hàm và lấy Token
+async function request(path, options = {}) {
+  const token = getToken();
 
-export async function toggleDevice(coopId, deviceKey, state) {
-  const response = await fetch(`${API_BASE}/coops/${coopId}/devices/${deviceKey}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ state })
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...options,   // spread: giữ nguyên method/body của từng hàm gọi
+    headers: {
+      'Content-Type': 'application/json',
+      // Nếu có token thì gắn, không thì bỏ qua (route public như /sensor GET)
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    },
   });
-  if (!response.ok) throw new Error('Failed to toggle device');
-  return response.json();
+
+  // Token hết hạn / sai → backend trả 401 → đá về trang đăng nhập
+  if (res.status === 401) {
+    logout();
+    window.location.reload();  // reload để App.jsx thấy isLoggedIn()=false → hiện LoginPage
+    throw new Error('Phiên đăng nhập hết hạn');
+  }
+
+  if (!res.ok) {
+    // Backend trả { detail: "..." } khi lỗi → ném ra để component hiển thị
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Lỗi ${res.status}`);
+  }
+  return res.json();
+}
+
+
+//                              Auth
+// (đã có trong auth.js — không viết lại)
+
+
+
+
+
+//                              Flock
+export function createFlock(flock) {
+  return request('/flocks', {
+    method: 'POST',
+    body: JSON.stringify(flock),                   // { name, chicken_count, breed... }
+  });
+}
+export function updateFlock(id, flock) {
+  return request(`/flocks/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(flock),
+  });
+}
+export function deleteFlock(id) {
+  return request(`/flocks/${id}`, { method: 'DELETE' });
+}
+
+
+//                          Sensor
+export function fetchReadings(limit = 100) {
+  return request(`/sensor?limit=${limit}`);
+}
+export function createReading(reading) {
+  return request('/sensor', {
+    method: 'POST',
+    body: JSON.stringify(reading),                 // { temperature, humidity, food_level, water_level, device_id }
+  });
+}
+export function fetchLatestReading() {
+  return request('/sensors/latest');
+}
+
+
+//                         Feeding
+export function fetchFeedingLogs(flockId) {
+  return request(`/feeding${flockId ? `?flock_id=${flockId}` : ''}`);
+}
+export function createFeedingLog(log) {
+  return request('/feeding', {
+    method: 'POST',
+    body: JSON.stringify(log),                     // { feed_type, amount_kg, scheduled_time, flock_id }
+  });
+}
+export function completeFeedingLog(id) {
+  return request(`/feeding/${id}/complete`, { method: 'PUT' });
+}
+
+
+
+
+//                         HEALTH
+export function fetchHealthRecords(flockId) {
+  return request(`/health${flockId ? `?flock_id=${flockId}` : ''}`);
+}
+export function createHealthRecord(record) {
+  return request('/health', {
+    method: 'POST',
+    body: JSON.stringify(record),
+  });
+}
+
+
+
+//                         FINANCIAL
+export function fetchFinancialRecords(flockId) {
+  return request(`/financial${flockId ? `?flock_id=${flockId}` : ''}`);
+}
+export function createFinancialRecord(record) {
+  return request('/financial', {
+    method: 'POST',
+    body: JSON.stringify(record),
+    // Backend tự tính revenue/profit — mình chỉ gửi input
+  });
+}
+export function fetchFinancialSummary(flockId) {
+  return request(`/financial/summary${flockId ? `?flock_id=${flockId}` : ''}`);
+}
+
+
+
+//                          ANALYTICS
+export function fetchDashboard() {
+  return request('/analytics/dashboard');           // { summary, recent_alerts }
+}
+export function fetchSensorHistory(deviceId, hours = 24) {
+  const q = new URLSearchParams({ hours });
+  if (deviceId) q.set('device_id', deviceId);
+  return request(`/analytics/sensor-history?${q}`);
 }
