@@ -9,3 +9,5 @@ paho-mqtt==1.6.1
 bcrypt
 python-jose[cryptography]
 python-multipart
+pytest
+httpx
