@@ -11,7 +11,8 @@ router = APIRouter()
 
 def calculate_fields(data: FinancialRecordCreate) -> dict:
     """Tự động tính toán các trường: khấu hao, doanh thu, tổng chi phí, lợi nhuận"""
-    depreciation = data.dead_chickens * data.unit_price
+    # Gà chết = hao hụt vốn MUA (cost_per_chick), không phải giá bán (unit_price)
+    depreciation = data.dead_chickens * data.cost_per_chick
     revenue = data.sold_chickens * data.unit_price
     chick_cost = data.quantity_before * data.cost_per_chick
     total_cost = chick_cost + data.feed_cost + data.other_cost + depreciation

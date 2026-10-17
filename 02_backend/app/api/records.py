@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from ..core.security import get_current_user
 from ..database import get_db
 from ..models.flock import Flock
 from .schemas import FlockCreate, FlockResponse
@@ -14,8 +15,10 @@ def get_flocks(db: Session = Depends(get_db)):
 
 # tạo dữ liệu mới trong bảng Flock
 @router.post("/flocks", response_model= FlockResponse)
-def create_flock(flock: FlockCreate, db: Session = Depends(get_db)):
-    db_flock = Flock(**flock.dict())
+def create_flock(flock: FlockCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    # current_user: route này BỊ BẢO VỆ — phải gửi header Authorization: Bearer <token>
+    # owner_id lấy từ user đang đăng nhập (không tin dữ liệu client gửi lên)
+    db_flock = Flock(**flock.dict(), owner_id=current_user.id)
     db.add(db_flock)
     db.commit()
     db.refresh(db_flock)
@@ -46,7 +49,7 @@ def update_flock(flock_id: int, flock: FlockCreate, db: Session = Depends(get_db
 def delete_flock(flock_id:int , db: Session = Depends(get_db)):
     db_flock = db.query(Flock).filter(Flock.id == flock_id).first()
     if not db_flock:
-        raise HTTPException(Status_code= 404, detail="Flock không tồn tại")
+        raise HTTPException(status_code=404, detail="Flock không tồn tại")
     db.delete(db_flock)
     db.commit()
     return {"message": "Đã xóa"}

@@ -30,7 +30,7 @@ def create_reading(reading: SensorReadingCreate, db: Session = Depends(get_db)):
     return db_reading
 
 
-@router.get("/sensors/latest")
+@router.get("/sensors/latest", response_model=SensorReadingResponse)
 def get_lastest_reading(db: Session = Depends(get_db)):
     reading = db.query(SensorReading).order_by(
         SensorReading.created_at.desc()

@@ -19,6 +19,11 @@ class UserResponse(BaseModel):
         orm_mode = True
 
 
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+
 # 2   FLOCK
 class FlockCreate(BaseModel):
     name: str
@@ -34,7 +39,7 @@ class FlockResponse(BaseModel):
     breed: Optional[str]
     age_weeks: Optional[int]
     coop_number: Optional[int]
-    owner_id: int
+    owner_id: Optional[int]  # None nếu đàn gà chưa được gán chủ (seed data)
     created_at: datetime
 
     class Config:
@@ -47,7 +52,7 @@ class SensorReadingCreate(BaseModel):
     humidity: float
     food_level: float
     water_level: float
-    device_id: int
+    device_id: Optional[int] = None  # cảm biến có thể chưa gán device
 
 class SensorReadingResponse(BaseModel):
     id: int
@@ -55,7 +60,7 @@ class SensorReadingResponse(BaseModel):
     humidity: float
     food_level: float
     water_level: float
-    device_id: int
+    device_id: Optional[int]  # nullable trong model → response cũng phải Optional
     created_at: datetime
 
     class Config:
