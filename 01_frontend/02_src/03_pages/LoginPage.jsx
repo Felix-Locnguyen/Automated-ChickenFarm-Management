@@ -1,18 +1,20 @@
 import { useState } from 'react';
-import { findUserByEmail } from '../04_services/users.js';
 import { verifyPassword } from '../04_services/auth.js';
+import { login, register } from '../04_services/auth';
 
 export default function LoginPage({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');     // cho chế độ đăng ký
+  const [mode, setMode] = useState('login');        // 'login' | 'register'
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+    e.preventDefault(); // chặn form reload trang mặc định
     setError('');
 
+     // Validate đơn giản phía client (backend cũng sẽ validate lần nữa)
     if (!email || !password) {
       setError('Vui lòng nhập đầy đủ thông tin');
       setLoading(false);
@@ -33,50 +35,80 @@ export default function LoginPage({ onLogin }) {
       return;
     }
 
-    onLogin(user);
-  };
+    setLoading(true); // hiện trạng thái đang xử lý
+  try {
+        const result = mode === 'login'
+          ? await login(email, password)
+          : await register(email, password, fullName);
 
+        if (!result.ok) {
+          setError(result.message);  // ví dụ: "Email đã tồn tại", "Sai email hoặc mật khẩu"
+          return;
+        }
+        if (mode === 'register') {
+          // Đăng ký xong → tự chuyển sang màn đăng nhập
+          setMode('login');
+          setError('');
+          alert('Đăng ký thành công! Vui lòng đăng nhập.');
+          return;
+        }
+        // Đăng nhập thành công → báo cho App.jsx chuyển sang Dashboard
+        onLogin({ email });
+      } catch (err) {
+        // fetch ném lỗi khi MẤT MẠNG hoặc backend sập
+        setError('Không kết nối được máy chủ. Hãy kiểm tra backend đã chạy chưa?');
+      } finally {
+        setLoading(false);          // luôn chạy, dù thành công hay lỗi
+      }
+  };
   return (
     <div className="login-page">
-      <div className="login-card">
-        <div className="login-logo">🐔</div>
-        <h1 className="login-title">Quản Lý Trang Trại Gà</h1>
-        <p className="login-subtitle">Đăng nhập để quản lý trang trại</p>
+      <form onSubmit={handleSubmit} className="login-form">
+        <h1>🐔 Trang Trại Gà Thông Minh</h1>
+        <h2>{mode === 'login' ? 'Đăng nhập' : 'Đăng ký'}</h2>
 
-        <form onSubmit={handleSubmit}>
-          {error && <div className="login-error">{error}</div>}
+        {mode === 'register' && (
+          <input
+            type="text"
+            placeholder="Họ và tên"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+          />
+        )}
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder="Mật khẩu"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-          <div className="login-field">
-            <label>Email</label>
-            <input
-              type="email"
-              placeholder="admin55@gmail.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-            />
-          </div>
+        {error && <p className="login-error">{error}</p>}
 
-          <div className="login-field">
-            <label>Mật khẩu</label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-            />
-          </div>
+        <button type="submit" disabled={loading}>
+          {loading ? 'Đang xử lý...' : mode === 'login' ? 'Đăng nhập' : 'Đăng ký'}
+        </button>
 
-          <button
-            type="submit"
-            className="login-btn"
-            disabled={loading}
-          >
-            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-          </button>
-        </form>
-      </div>
+        <p className="login-switch" onClick={() => {
+          setMode(mode === 'login' ? 'register' : 'login');
+          setError('');
+        }}>
+          {mode === 'login'
+            ? 'Chưa có tài khoản? Đăng ký'
+            : 'Đã có tài khoản? Đăng nhập'}
+        </p>
+      </form>
     </div>
   );
 }
+
+/* note
+ e.preventDefault() — form HTML mặc định submit → reload trang → mất hết state React. Bắt buộc chặn trong SPA.
+2. loading state — tránh người dùng bấm nút 10 lần vì tưởng chưa nhận lệnh.
+3. finally — block chạy LUÔN LUÔN (kể cả khi có exception) → lý tưởng để tắt spinner.
+*/
