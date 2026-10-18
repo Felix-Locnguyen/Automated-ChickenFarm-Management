@@ -12,9 +12,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import analytics, auth, environment, feeding, financial, health, records, alerts, devices
 from app.database import Base, engine
 
-# LƯU Ý (Phase 2 sẽ làm): thư mục app/iot/01_mqtt/ bắt đầu bằng số →
-# Python không import được bằng `from app.iot.01_mqtt.handler import ...`.
-# Giải pháp: đổi tên thư mục (mqtt/, device/, command/) hoặc importlib — tạm thời để sau.
+# Đã đổi tên thư mục iot ở Phase 2: mqtt/, device/, command/ (bỏ tiền tố số
+# vì Python không import được module tên bắt đầu bằng số).
 
 
 @asynccontextmanager

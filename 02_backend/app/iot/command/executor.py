@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from ...models.device import Device
-from ..01_mqtt.handler import MQTTHandler
+from ..mqtt.handler import MQTTHandler
 import logging
 
 logger = logging.getLogger(__name__)
