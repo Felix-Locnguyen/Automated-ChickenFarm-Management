@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { verifyPassword } from '../04_services/auth.js';
 import { login, register } from '../04_services/auth';
 
 export default function LoginPage({ onLogin }) {
@@ -21,22 +20,8 @@ export default function LoginPage({ onLogin }) {
       return;
     }
 
-    const user = findUserByEmail(email);
-    if (!user) {
-      setError('Sai tên tài khoản hoặc mật khẩu');
-      setLoading(false);
-      return;
-    }
-
-    const valid = await verifyPassword(password, user.passwordHash);
-    if (!valid) {
-      setError('Sai tên tài khoản hoặc mật khẩu');
-      setLoading(false);
-      return;
-    }
-
     setLoading(true); // hiện trạng thái đang xử lý
-  try {
+    try {
         const result = mode === 'login'
           ? await login(email, password)
           : await register(email, password, fullName);

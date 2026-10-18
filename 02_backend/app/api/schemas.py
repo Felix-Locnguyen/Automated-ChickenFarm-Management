@@ -142,8 +142,9 @@ class DeviceResponse(BaseModel):
 
 # 8   FINANCIAL RECORD
 class FinancialRecordCreate(BaseModel):
-    flock_id: int
+    flock_id: Optional[int] = None  # phiếu "Thức ăn/Thuốc" có thể áp dụng chung nhiều chuồng
     date: datetime
+    category: Optional[str] = "ban_ga"  # ban_ga / ban_trung / ga_chet / thuc_an
     quantity_before: int
     cost_per_chick: float = 0
     dead_chickens: int = 0
@@ -156,8 +157,9 @@ class FinancialRecordCreate(BaseModel):
 
 class FinancialRecordResponse(BaseModel):
     id: int
-    flock_id: int
+    flock_id: Optional[int]
     date: datetime
+    category: Optional[str]
     quantity_before: int
     cost_per_chick: float
     dead_chickens: int

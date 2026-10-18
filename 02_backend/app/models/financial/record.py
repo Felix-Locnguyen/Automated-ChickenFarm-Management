@@ -21,6 +21,7 @@ class FinancialRecord(Base):
     date = Column(DateTime(timezone=True))
 
     # --- do user nhập ---
+    category = Column(String(50), default="ban_ga")  # phân loại phiếu: ban_ga / ban_trung / ga_chet / thuc_an
     quantity_before = Column(Integer, default=0)  # số gà đầu kỳ
     cost_per_chick = Column(Float, default=0)     # giá mỗi con mua vào
     dead_chickens = Column(Integer, default=0)    # số gà chết
