@@ -23,6 +23,9 @@ node_modules/
 # ===== Docker volumes (dữ liệu DB, MinIO...) =====
 docker-data/
 
+# ===== SQLite DB (file dữ liệu — KHÔNG commit) =====
+*.db
+
 # ===== Hệ điều hành / IDE =====
 .DS_Store
 Thumbs.db
