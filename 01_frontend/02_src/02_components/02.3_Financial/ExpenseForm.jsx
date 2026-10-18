@@ -28,7 +28,8 @@ export default function ExpenseForm({ coops, onSave }) {
 
     // Validate gà chết không quá số lượng có
     if (expenseType === 'dead' && form.coopId) {
-      const coop = coops.find(c => c.id === form.coopId);
+      // form.coopId là string (từ <option>), coop.id là number → so sánh qua Number()
+      const coop = coops.find(c => c.id === Number(form.coopId));
       if (coop && Number(form.quantity) > coop.chickens) {
         alert(`Số gà chết (${form.quantity}) không được vượt quá gà hiện có (${coop.chickens})`);
         return;
@@ -38,8 +39,8 @@ export default function ExpenseForm({ coops, onSave }) {
     onSave({
       type: 'expense',
       expenseType: expenseType === 'dead' ? 'Gà chết' : 'Thức ăn/Thuốc',
-      coopId: form.coopId,
-      coopName: coops.find(c => c.id === form.coopId)?.name || '',
+      coopId: form.coopId ? Number(form.coopId) : null,   // phiếu thức ăn có thể không gán chuồng
+      coopName: coops.find(c => c.id === Number(form.coopId))?.name || '',
       date: form.date,
       quantity: Number(form.quantity),
       unitPrice: Number(form.unitPrice),

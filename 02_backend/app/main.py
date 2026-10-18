@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import analytics, auth, environment, feeding, financial, health, records
+from app.api import analytics, auth, environment, feeding, financial, health, records, alerts, devices
 from app.database import Base, engine
 
 # LƯU Ý (Phase 2 sẽ làm): thư mục app/iot/01_mqtt/ bắt đầu bằng số →
@@ -50,7 +50,7 @@ app.add_middleware(
 # include_router: ghép từng router vào app.
 # prefix="/api" → mọi endpoint trong router đều thêm tiền tố /api
 # (ví dụ "/auth/login" thành "/api/auth/login")
-for router_module in [auth, environment, feeding, records, health, analytics, financial]:
+for router_module in [auth, environment, feeding, records, health, analytics, financial, alerts, devices]:
     app.include_router(router_module.router, prefix="/api")
 
 

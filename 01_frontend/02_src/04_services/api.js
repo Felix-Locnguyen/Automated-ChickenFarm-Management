@@ -50,6 +50,9 @@ async function request(path, options = {}) {
 
 
 //                              Flock
+export function fetchFlocks() {
+  return request('/flocks');                        // GET /api/flocks — danh sách chuồng
+}
 export function createFlock(flock) {
   return request('/flocks', {
     method: 'POST',
@@ -95,6 +98,9 @@ export function createFeedingLog(log) {
 export function completeFeedingLog(id) {
   return request(`/feeding/${id}/complete`, { method: 'PUT' });
 }
+export function deleteFeedingLog(id) {
+  return request(`/feeding/${id}`, { method: 'DELETE' });  // xóa lịch cho ăn
+}
 
 
 
@@ -125,6 +131,39 @@ export function createFinancialRecord(record) {
 }
 export function fetchFinancialSummary(flockId) {
   return request(`/financial/summary${flockId ? `?flock_id=${flockId}` : ''}`);
+}
+export function updateFinancialRecord(id, record) {
+  return request(`/financial/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(record),
+  });
+}
+export function deleteFinancialRecord(id) {
+  return request(`/financial/${id}`, { method: 'DELETE' });
+}
+
+
+//                         DEVICES
+export function fetchDevices(flockId) {
+  return request(`/devices${flockId ? `?flock_id=${flockId}` : ''}`);
+}
+export function createDevice(device) {
+  return request('/devices', {
+    method: 'POST',
+    body: JSON.stringify(device),                  // { name, type, flock_id }
+  });
+}
+export function toggleDevice(deviceId) {
+  return request(`/devices/${deviceId}/toggle`, { method: 'PUT' });
+}
+
+
+//                          ALERTS
+export function fetchAlerts(resolved = false) {
+  return request(`/alerts?resolved=${resolved}`);  // { coop_name, message, created_at... }
+}
+export function resolveAlert(id) {
+  return request(`/alerts/${id}/resolve`, { method: 'PUT' });
 }
 
 

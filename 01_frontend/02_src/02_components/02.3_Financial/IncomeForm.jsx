@@ -24,7 +24,8 @@ export default function IncomeForm({ coops, onSave }) {
 
     // Validate bán gà không quá số lượng có
     if (form.source === 'ban_ga') {
-      const coop = coops.find(c => c.id === form.coopId);
+      // form.coopId là string (từ <option>), coop.id là number → so sánh qua Number()
+      const coop = coops.find(c => c.id === Number(form.coopId));
       if (coop && Number(form.quantity) > coop.chickens) {
         alert(`Số lượng bán (${form.quantity}) vượt quá gà hiện có (${coop.chickens}) trong chuồng`);
         return;
@@ -33,8 +34,8 @@ export default function IncomeForm({ coops, onSave }) {
 
     onSave({
       type: 'income',
-      coopId: form.coopId,
-      coopName: coops.find(c => c.id === form.coopId)?.name || '',
+      coopId: Number(form.coopId),                    // ép về number cho khớp id backend
+      coopName: coops.find(c => c.id === Number(form.coopId))?.name || '',
       date: form.date,
       source: form.source === 'ban_ga' ? 'Bán gà' : 'Bán trứng',
       quantity: Number(form.quantity),
@@ -72,7 +73,7 @@ export default function IncomeForm({ coops, onSave }) {
       {form.source === 'ban_ga' && form.coopId && (
         <div style={{ fontSize: '12px', color: '#a0826d', marginBottom: '12px', padding: '8px', backgroundColor: '#f5ede0', borderRadius: '6px' }}>
           🐔 Gà hiện có trong chuồng: <b style={{ color: '#654321' }}>
-            {coops.find(c => c.id === form.coopId)?.chickens?.toLocaleString('vi-VN') || 0} con
+            {coops.find(c => c.id === Number(form.coopId))?.chickens?.toLocaleString('vi-VN') || 0} con
           </b>
         </div>
       )}
