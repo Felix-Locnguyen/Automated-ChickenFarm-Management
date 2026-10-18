@@ -15,7 +15,9 @@ import AlertNotification from './02_components/02.4_Common/AlertNotification.jsx
 import { isLoggedIn as checkLoggedIn, logout } from './04_services/auth';
 import {
   fetchFlocks,
+  createFlock,
   updateFlock,
+  deleteFlock,
   fetchDevices,
   toggleDevice,
   fetchAlerts,
@@ -335,6 +337,31 @@ export default function App() {
     }
   };
 
+  /** Tạo chuồng mới → POST /flocks (backend lấy owner_id từ token). */
+  const handleAddFlock = async (flockData) => {
+    try {
+      await createFlock(flockData);
+      await loadData();            // tải lại để thấy chuồng mới (id từ server)
+      showToast(`Đã tạo "${flockData.name}"`);
+    } catch (err) {
+      showToast(`Lỗi: ${err.message}`);
+    }
+  };
+
+  /** Xóa chuồng → DELETE /flocks/{id}. */
+  const handleDeleteCoop = async (coopId) => {
+    const flock = flocks.find(f => f.id === coopId);
+    try {
+      await deleteFlock(coopId);
+      setSelectedCoopId(null);     // đang ở chi tiết → quay về danh sách
+      setActiveTab('coopsTab');
+      await loadData();
+      showToast(`Đã xóa "${flock?.name || 'chuồng'}"`);
+    } catch (err) {
+      showToast(`Lỗi: ${err.message}`);
+    }
+  };
+
   /** Trừ/cong số gà khi tạo/sửa/xóa phiếu bán gà hoặc gà chết. */
   const adjustChickenCount = async (coopId, delta) => {
     const flock = flocks.find(f => f.id === coopId);
@@ -511,6 +538,8 @@ export default function App() {
             onRemoveFeed={handleRemoveFeedSchedule}
             onUpdateThresholds={handleUpdateThresholds}
             onUpdateCoop={handleUpdateCoop}
+            onAddFlock={handleAddFlock}
+            onDeleteCoop={handleDeleteCoop}
           />
         )}
 

@@ -1,10 +1,17 @@
 import { useState } from 'react';
 import FeedingControl from '../02.1_Dashboard/FeedingControl.jsx';
 
-export default function CageViewer({ coop, onBack, onToggleDevice, onAddFeedSchedule, onRemoveFeedSchedule, onUpdateThresholds, onUpdateCoop }) {
+export default function CageViewer({ coop, onBack, onToggleDevice, onAddFeedSchedule, onRemoveFeedSchedule, onUpdateThresholds, onUpdateCoop, onDeleteCoop }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(coop.name);
   const [editChickens, setEditChickens] = useState(coop.chickens);
+
+  const handleDelete = () => {
+    // confirm(): dialog native của trình duyệt — chặn nhầm chuột
+    if (window.confirm(`Xóa vĩnh viễn "${coop.name}"? Toàn bộ dữ liệu chuồng này sẽ mất.`)) {
+      onDeleteCoop(coop.id);
+    }
+  };
 
   const handleSave = () => {
     if (editName.trim()) {
@@ -51,7 +58,17 @@ export default function CageViewer({ coop, onBack, onToggleDevice, onAddFeedSche
               <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#654321', margin: 0 }}>{coop.name}</h2>
               <p style={{ fontSize: '12px', color: '#a0826d', margin: '4px 0 0 0' }}>🐔 {coop.chickens?.toLocaleString('vi-VN')} con</p>
             </div>
-            <button className="coop-edit-btn" onClick={() => setIsEditing(true)}>✏️</button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button className="coop-edit-btn" onClick={() => setIsEditing(true)}>✏️</button>
+              <button
+                className="coop-edit-btn"
+                onClick={handleDelete}
+                title="Xóa chuồng"
+                style={{ backgroundColor: '#fee2e2', color: '#b91c1c' }}
+              >
+                🗑️
+              </button>
+            </div>
           </div>
         )}
       </div>

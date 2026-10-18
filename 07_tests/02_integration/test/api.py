@@ -154,5 +154,55 @@ def test_dashboard_tong_hop(client):
     assert "total_chickens" in body["summary"]
 
 
+# ---------- ALERT TỰ ĐỘNG (POST /sensor vượt ngưỡng) ----------
+
+def test_canh_bao_tu_dong_vuot_nguong(client, auth_headers):
+    """Nhiệt độ 41°C (> 35) → GET /alerts thấy alert temperature sinh tự động."""
+    # DB chung — test unit có thể để sót alert temperature đang mở → resolve trước
+    for a in client.get("/api/alerts").json():
+        if a["type"] == "temperature":
+            client.put(f"/api/alerts/{a['id']}/resolve", headers=auth_headers)
+
+    client.post("/api/sensor",
+                json={"temperature": 41, "humidity": 60, "food_level": 80, "water_level": 90})
+    r = client.get("/api/alerts")
+    assert r.status_code == 200
+    temps = [a for a in r.json() if a["type"] == "temperature"]
+    assert len(temps) == 1
+    assert temps[0]["severity"] == "critical"   # > 40°C → mức nghiêm trọng
+
+
+def test_canh_bao_khong_tao_trung_lap(client):
+    """Reading vẫn vượt ngưỡng → KHÔNG thêm alert trùng (chỉ 1 alert đang mở)."""
+    client.post("/api/sensor",
+                json={"temperature": 42, "humidity": 60, "food_level": 80, "water_level": 90})
+    r = client.get("/api/alerts")
+    temps = [a for a in r.json() if a["type"] == "temperature"]
+    assert len(temps) == 1   # vẫn là 1 — đã có alert đang mở
+
+
+def test_resolve_xong_vuot_nguong_tao_alert_moi(client, auth_headers):
+    """Đánh dấu đã xử lý → đọc lại vượt ngưỡng → alert MỚI được tạo."""
+    r = client.get("/api/alerts")
+    old_id = [a for a in r.json() if a["type"] == "temperature"][0]["id"]
+    client.put(f"/api/alerts/{old_id}/resolve", headers=auth_headers)
+
+    client.post("/api/sensor",
+                json={"temperature": 43, "humidity": 60, "food_level": 80, "water_level": 90})
+    r = client.get("/api/alerts")
+    temps = [a for a in r.json() if a["type"] == "temperature"]
+    assert len(temps) == 1        # alert mới sau khi resolve
+    assert temps[0]["id"] != old_id
+
+
+def test_reading_binh_thuong_khong_sinh_canh_bao(client):
+    """Reading trong ngưỡng → không crash, không thêm alert temperature mới."""
+    client.post("/api/sensor",
+                json={"temperature": 28, "humidity": 65, "food_level": 90, "water_level": 95})
+    r = client.get("/api/alerts")
+    assert r.status_code == 200
+    assert len([a for a in r.json() if a["type"] == "temperature"]) == 1  # không tăng
+
+
 def test_health_check(client):
     assert client.get("/health").json() == {"status": "ok"}

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models.sensor.reading import SensorReading
+from ..services.alert import check_reading_and_alert
 from .schemas import SensorReadingCreate, SensorReadingResponse
 
 router = APIRouter()
@@ -27,6 +28,10 @@ def create_reading(reading: SensorReadingCreate, db: Session = Depends(get_db)):
     db.add(db_reading)
     db.commit()
     db.refresh(db_reading)
+
+    # Tự sinh cảnh báo nếu reading vượt ngưỡng (temp/ẩm/food/water)
+    check_reading_and_alert(db, db_reading)
+
     return db_reading
 
 
