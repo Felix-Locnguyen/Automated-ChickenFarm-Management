@@ -37,8 +37,18 @@ class MQTTHandler:
             payload = json.loads(msg.payload.decode())
             logger.info(f"Received message on {topic}: {payload}")
 
-            if topic in self.callbacks:
-                self.callbacks[topic](payload)
+            # 1) Tìm callback đăng ký đúng CHÍNH XÁC topic
+            callback = self.callbacks.get(topic)
+            # 2) Không có? So theo pattern wildcard ("farm/sensor/+", "farm/+/state"...)
+            #    topic_matches_sub là hàm có sẵn của paho — đỡ phải tự viết regex
+            if callback is None:
+                for pattern, fn in self.callbacks.items():
+                    if mqtt.topic_matches_sub(pattern, topic):
+                        callback = fn
+                        break
+            # Gọi callback kèm CẢ topic — subscriber cần device_id nằm trong topic
+            if callback:
+                callback(topic, payload)
         except json.JSONDecodeError:
             logger.error(f"Invalid JSON on topic {topic}")
         except Exception as e:
