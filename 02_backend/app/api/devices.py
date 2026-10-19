@@ -12,6 +12,12 @@ from ..models.device import Device
 from ..models.flock import Flock
 from .schemas import DeviceCreate, DeviceResponse
 
+
+
+from ..iot.command.executor import CommandExecutor
+from ..iot.mqtt.connection import mqtt_handler 
+
+
 router = APIRouter()
 
 
@@ -47,18 +53,30 @@ def toggle_device(
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
-    """Bật/tắt thiết bị: đảo trạng thái is_active + cập nhật status.
+    """Bật/tắt thiết bị: đảo trạng thái + GỬI LỆNH MQTT xuống phần cứng.
 
-    Phase 2 sẽ thêm: publish lệnh MQTT xuống phần cứng ở đây —
-    nếu thiết bị thật xác nhận thì mới commit (tránh báo thành công giả).
+    Quy tắc "không nói dối":
+    - executor.toggle_device() chỉ commit DB nếu publish MQTT thành công;
+    - broker chết → trả 503, trạng thái DB giữ nguyên (thà báo lỗi còn hơn
+      web hiển thị "đã bật" trong khi quạt không quay).
     """
+
     device = db.query(Device).filter(Device.id == device_id).first()
+
     if not device:
         raise HTTPException(status_code=404, detail="Thiết bị không tồn tại")
-    device.is_active = not device.is_active
-    device.status = "online" if device.is_active else "offline"
-    db.commit()
-    db.refresh(device)
+    
+
+    executor = CommandExecutor(db, mqtt_handler) 
+    success = executor.toggle_device(device_id) # tính trạng thái mới → send_command() publish → chỉ commit nếu publish OK.
+
+    if not success:
+        raise HTTPException(
+            status_code=503,
+            detail="Không gửi được lệnh MQTT (broker chưa kết nối?) — trạng thái giữ nguyên",
+        )
+
+    db.refresh(device)   # executor đã commit → refresh để trả is_active MỚI
     return device
 
 

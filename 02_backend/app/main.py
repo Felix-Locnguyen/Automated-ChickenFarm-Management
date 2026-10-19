@@ -5,16 +5,23 @@ Chạy server (trong thư mục 02_backend):
 Mở Swagger để test: http://localhost:8000/docs
 """
 from contextlib import asynccontextmanager
+import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import analytics, auth, environment, feeding, financial, health, records, alerts, devices
 from app.database import Base, engine
+from app.iot import uplink
+from app.iot.mqtt.connection import mqtt_handler
 
-# LƯU Ý (Phase 2 sẽ làm): thư mục app/iot/01_mqtt/ bắt đầu bằng số →
-# Python không import được bằng `from app.iot.01_mqtt.handler import ...`.
-# Giải pháp: đổi tên thư mục (mqtt/, device/, command/) hoặc importlib — tạm thời để sau.
+# Python mặc định chỉ hiện log WARNING trở lên → bật INFO để thấy
+# "Connected to MQTT broker..." khi khởi động server.
+logging.basicConfig(level=logging.INFO)
+
+# Đã đổi tên thư mục iot ở Phase 2: mqtt/, device/, command/ (bỏ tiền tố số
+# vì Python không import được module tên bắt đầu bằng số).
+
 
 
 @asynccontextmanager
@@ -26,8 +33,24 @@ async def lifespan(app: FastAPI):
     - yield là ranh giới: trên = startup, dưới = shutdown.
     """
     Base.metadata.create_all(bind=engine)
+
+    # Startup: kết nối MQTT + start loop nền (thread của paho)
+    # .start() dùng loop_start() → paho tự chạy 1 thread network riêng,
+    # main thread (uvicorn) không bị chặn.
+    try:
+        mqtt_handler.connect()   # thử kết nối — fail cũng không crash server
+        mqtt_handler.start()
+        # Uplink: lắng nghe cảm biến — "+" = 1 cấp bất kỳ
+        mqtt_handler.subscribe("farm/sensor/+", uplink.on_sensor_message)
+        uplink.start_worker()
+    except Exception as e:
+        print(f"[MQTT] Không kết nối được broker (sẽ thử lại sau): {e}")
+
     yield
-    # Shutdown: Phase 2 sẽ dừng MQTT ở đây (mqtt_handler.stop())
+
+    # Shutdown: dừng worker trước, ngắt MQTT sau (đúng thứ tự — tránh mất message dở dang)
+    uplink.stop_worker()
+    mqtt_handler.stop()
 
 
 app = FastAPI(
