@@ -14,6 +14,8 @@ from app.api import analytics, auth, environment, feeding, financial, health, re
 from app.database import Base, engine
 from app.iot import uplink
 from app.iot.mqtt.connection import mqtt_handler
+from app.services import feeding_scheduler, climate_control
+
 
 # Python mặc định chỉ hiện log WARNING trở lên → bật INFO để thấy
 # "Connected to MQTT broker..." khi khởi động server.
@@ -21,7 +23,6 @@ logging.basicConfig(level=logging.INFO)
 
 # Đã đổi tên thư mục iot ở Phase 2: mqtt/, device/, command/ (bỏ tiền tố số
 # vì Python không import được module tên bắt đầu bằng số).
-
 
 
 @asynccontextmanager
@@ -42,14 +43,21 @@ async def lifespan(app: FastAPI):
         mqtt_handler.start()
         # Uplink: lắng nghe cảm biến — "+" = 1 cấp bất kỳ
         mqtt_handler.subscribe("farm/sensor/+", uplink.on_sensor_message)
+        
         uplink.start_worker()
+        feeding_scheduler.start_scheduler()
+        climate_control.start_climate()
+
     except Exception as e:
         print(f"[MQTT] Không kết nối được broker (sẽ thử lại sau): {e}")
 
     yield
 
-    # Shutdown: dừng worker trước, ngắt MQTT sau (đúng thứ tự — tránh mất message dở dang)
+    # Shutdown: dừng worker trước, ngắt MQTT sau (đúng thứ tự — tránh mất message dở dang)\
+    await feeding_scheduler.stop_scheduler()
     uplink.stop_worker()
+    await climate_control.stop_climate()
+    
     mqtt_handler.stop()
 
 

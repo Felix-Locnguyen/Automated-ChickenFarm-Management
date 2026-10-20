@@ -176,3 +176,9 @@ class FinancialRecordResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+# AUTO MODE (tự động hoá môi trường)
+class AutoModeUpdate(BaseModel):
+    enabled: bool
+
+
