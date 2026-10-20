@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "author": "Felix Nguyen",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": -67.2, "left": -139.16, "attrs": {} },
+    {
+      "type": "wokwi-lcd1602",
+      "id": "lcd1",
+      "top": -80,
+      "left": 24.8,
+      "attrs": { "pins": "i2c" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led1",
+      "top": -13.2,
+      "left": -351.4,
+      "attrs": { "color": "red" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led2",
+      "top": -13.2,
+      "left": -409,
+      "attrs": { "color": "green" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 42.35,
+      "left": -288,
+      "attrs": { "value": "1000" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r2",
+      "top": 51.95,
+      "left": -288,
+      "attrs": { "value": "1000" }
+    },
+    { "type": "wokwi-hc-sr04", "id": "ultrasonic1", "top": -257.7, "left": -272.9, "attrs": {} }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "esp:GND.2", "lcd1:GND", "black", [ "v0", "h38.4", "v28.8" ] ],
+    [ "lcd1:VCC", "esp:3V3", "red", [ "h-9.6", "v-28.7", "h-249.75" ] ],
+    [ "lcd1:SDA", "esp:21", "green", [ "h-28.8", "v9.8" ] ],
+    [ "lcd1:SCL", "esp:22", "purple", [ "h-19.2", "v-18.9" ] ],
+    [ "led2:C", "esp:GND.1", "black", [ "h0.4", "v57.6" ] ],
+    [ "led1:C", "esp:GND.1", "black", [ "v0" ] ],
+    [ "led1:A", "r1:1", "green", [ "v0" ] ],
+    [ "r1:2", "esp:26", "green", [ "v0" ] ],
+    [ "led2:A", "r2:1", "green", [ "v0" ] ],
+    [ "r2:2", "esp:27", "green", [ "v0" ] ],
+    [ "ultrasonic1:VCC", "esp:5V", "red", [ "v0" ] ],
+    [ "ultrasonic1:TRIG", "esp:5", "green", [ "v0" ] ],
+    [ "ultrasonic1:ECHO", "esp:18", "green", [ "v0" ] ],
+    [ "ultrasonic1:GND", "esp:GND.1", "black", [ "v0" ] ]
+  ],
+  "dependencies": {}
+}
