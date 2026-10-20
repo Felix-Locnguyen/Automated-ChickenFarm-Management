@@ -1,0 +1,4 @@
+[wokwi]
+version = 1
+firmware = '.pio/build/DHT22_Sensor_Test/firmware.bin'
+elf = '.pio/build/DHT22_Sensor_Test/firmware.elf'

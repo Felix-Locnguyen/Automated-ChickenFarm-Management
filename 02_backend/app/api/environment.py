@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models.sensor.reading import SensorReading
 from ..services.alert import check_reading_and_alert
-from .schemas import SensorReadingCreate, SensorReadingResponse
+from .schemas import SensorReadingCreate, SensorReadingResponse,AutoModeUpdate
+from ..core.security import get_current_user
+from ..services import climate_control
 
 router = APIRouter()
 
@@ -51,3 +53,21 @@ db.query(SensorReading)          # SELECT * FROM sensor_readings
     .limit(limit)                # LIMIT 100
     .all()                       # → list of objects
 '''
+
+
+@router.get("/environment/auto")
+def get_auto_mode():
+    """Xem chế độ tự động hoá đang bật hay tắt."""
+    return {"auto_enabled": climate_control.is_auto_enabled()}
+
+
+
+@router.put("/environment/auto")
+def set_auto_mode(update: AutoModeUpdate, user=Depends(get_current_user)):
+    """Bật/tắt chế độ tự động hoá môi trường.
+
+    - BẬT: backend tự bật/tắt quạt + đèn sưởi dựa trên cảm biến (mỗi 10s).
+    - TẮT: scheduler đứng yên — người dùng điều khiển tay bình thường.
+    """
+    climate_control.set_auto(update.enabled)
+    return {"auto_enabled": climate_control.is_auto_enabled()}
