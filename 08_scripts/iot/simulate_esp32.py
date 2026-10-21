@@ -99,6 +99,10 @@ def main():
     DEVICE_ID = args.device_id
 
     client = mqtt.Client()
+    
+    global CLIENT
+    CLIENT = client
+
     client.on_connect = on_connect
     client.on_message = on_message
     client.connect(args.broker, 1883, 60)
@@ -130,4 +134,4 @@ def main():
 DEVICE_ID = 1  # sẽ được gán lại từ args trong main()
 
 if __name__ == "__main__":
-    main()
+    main(CLIENT = None )
