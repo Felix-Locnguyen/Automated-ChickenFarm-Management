@@ -8,12 +8,9 @@ Script đóng vai 1 ESP32 trong chuồng:
 - PUBLISH readings JSON lên farm/sensor/{id} mỗi --interval giây
   (xoay vòng kịch bản: bình thường → nóng → lạnh → ẩm cao → hết thức ăn...)
 - SUBSCRIBE farm/device/{id}/command:
-    ON/OFF  → in trạng thái relay giả lập
-    CONFIG  → in cấu hình mới nhận được
-    FEED    → mô phỏng motor + load-cell chạy trong thread RIÊNG
+    ON/OFF → in trạng thái relay giả lập
+    FEED   → mô phỏng motor + load-cell chạy trong thread RIÊNG
              (callback của paho KHÔNG được chặn network loop — giống uplink backend)
-             motor xong → PUBLISH farm/device/{id}/status {"state":"done",...}
-             về backend (đúng protocol firmware farm_node.ino)
 """
 
 import argparse
@@ -54,15 +51,6 @@ def simulate_feed_motor(amount_kg: float):
         print(f"     ⚖️  đang rải {i / 10:.1f}/{amount_kg} kg")
     print(f"  ✅ Cân xác nhận đủ {amount_kg}kg — motor DỪNG")
 
-    # Báo trạng thái THẬT về backend (đúng protocol farm_node.ino) —
-    # publish từ thread này AN TOÀN: paho tự sắp hàng, không cần queue thêm.
-    if CLIENT:
-        status = {"state": "done",
-                  "actual_grams": amount_kg * 1000 - 2.0,   # mô phỏng lệch 2g
-                  "target_grams": amount_kg * 1000}
-        CLIENT.publish(f"farm/device/{DEVICE_ID}/status", json.dumps(status))
-        print(f"  📤 Đã báo status done về backend ({status['actual_grams']}g)")
-
 
 def on_message(client, userdata, msg):
     """Nhận lệnh từ backend — chạy trong network thread của paho."""
@@ -87,8 +75,6 @@ def on_message(client, userdata, msg):
                          daemon=True).start()
     elif command == "SET_SPEED":
         print(f"  🌀 Quạt chạy mức {data.get('params', {}).get('speed')}%")
-    elif command == "CONFIG":
-        print(f"  ⚙️  Cấu hình mới: {data.get('params')}")
     else:
         print("  ❓ Lệnh không nhận diện được — bỏ qua")
 
@@ -102,21 +88,21 @@ def on_connect(client, userdata, flags, rc):
 
 
 def main():
-    global DEVICE_ID, CLIENT
+    global DEVICE_ID
     parser = argparse.ArgumentParser(description="Giả lập ESP32 farm")
     parser.add_argument("--broker", default="localhost")
     parser.add_argument("--device-id", type=int, default=13,
                         help="device_id trong DB — topic sensor/command sẽ dùng id này")
     parser.add_argument("--interval", type=float, default=5.0,
                         help="giây giữa 2 lần publish readings")
-    parser.add_argument("--no-sensor", action="store_true",
-                        help="chỉ nghe lệnh, không publish readings (node thiết bị thuần —"
-                             " tránh đè reading của node cảm biến thật)")
     args = parser.parse_args()
     DEVICE_ID = args.device_id
 
     client = mqtt.Client()
-    CLIENT = client   # on_message (thread paho) dùng để publish status xong việc
+    
+    global CLIENT
+    CLIENT = client
+
     client.on_connect = on_connect
     client.on_message = on_message
     client.connect(args.broker, 1883, 60)
@@ -131,12 +117,11 @@ def main():
             scenario_name, reading = SCENARIOS[
                 (cycle // SCENARIO_EVERY_N_PUBLISHES) % len(SCENARIOS)
             ]
-            if not args.no_sensor:
-                payload = dict(reading, device_id=DEVICE_ID)
-                client.publish(f"farm/sensor/{DEVICE_ID}", json.dumps(payload))
-                print(f"📤 [{scenario_name}] temp={reading['temperature']}°C "
-                      f"hum={reading['humidity']}% food={reading['food_level']}% "
-                      f"water={reading['water_level']}%")
+            payload = dict(reading, device_id=DEVICE_ID)
+            client.publish(f"farm/sensor/{DEVICE_ID}", json.dumps(payload))
+            print(f"📤 [{scenario_name}] temp={reading['temperature']}°C "
+                  f"hum={reading['humidity']}% food={reading['food_level']}% "
+                  f"water={reading['water_level']}%")
             cycle += 1
             time.sleep(args.interval)
     except KeyboardInterrupt:
@@ -146,8 +131,7 @@ def main():
         client.disconnect()
 
 
-DEVICE_ID = 1   # sẽ được gán lại từ args trong main()
-CLIENT = None    # paho client — gán trong main(), để on_message (thread paho) publish status được
+DEVICE_ID = 1  # sẽ được gán lại từ args trong main()
 
 if __name__ == "__main__":
-    main()
+    main(CLIENT = None )
