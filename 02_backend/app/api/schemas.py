@@ -182,3 +182,8 @@ class AutoModeUpdate(BaseModel):
     enabled: bool
 
 
+class DeviceConfig(BaseModel):
+    config: dict   # dict tự do — mỗi loại thiết bị có config khác nhau
+                   # (quạt: speed/mode, máy ăn: portion_size...) — linh hoạt, không hard-code field
+
+

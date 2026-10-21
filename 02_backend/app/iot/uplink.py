@@ -29,7 +29,7 @@ from app.database import SessionLocal
 from app.models.device import Device
 from app.models.sensor.reading import SensorReading
 from app.services.alert import check_reading_and_alert
-
+from app.models.alert import Alert
 
 
 logger = logging.getLogger(__name__)
@@ -48,6 +48,92 @@ def on_sensor_message(topic: str, payload: dict):
     Chỉ đẩy (topic, payload) vào queue rồi trả về ngay.
     """
     message_queue.put((topic, payload))
+
+
+def on_device_status(topic: str, payload: dict):
+    """Callback cho 'farm/device/+/status' — chạy TRONG thread của paho.
+
+    Cũng CHỈ đẩy vào queue — worker bên dưới tự phân luồng theo prefix topic.
+    """
+    message_queue.put((topic, payload))
+
+def _handle_device_status(db:Session, topic: str, payload: dict):
+    """
+    Xử lí, thông báo trậng thái hiện tại từ firware: farm/device/{id}/status.
+
+    Payload: {"state": "done",  "actual_grams": 2498.0, "target_grams": 2500.0}
+         hoặc {"state": "error", "error": "ket-motor", ...}
+    Chạy trong worker thread — session truyền sẵn từ _worker_loop. 
+    """
+
+    # Topic "farm/device/3/status" → tách device_id
+    parts = topic.split("/")            # ["farm", "device", "3", "status"]
+
+    try: 
+        device_id = int(parts[2])
+    except (IndexError, ValueError):
+        logger.warning(f"Topic status sai định dạng {topic}")
+        return
+
+    device = db.query(Device).filter(Device.id == device_id).first()
+    # kiểm tra dữ liệu có tồn tại không
+    if not device:
+        logger.warning(f"Status từ device {device_id} không có trong database")
+        return
+    state = payload.get("state","")
+
+    if state == "error":
+        error_code = payload.get("error", "khong ro")
+        device.status = "warning"       # cột status có sẵn: online/offline/warning
+        db.commit()
+
+        # Chống lặp (giống alert.py): chưa có alert đang mở CÙNG device thì mới tạo
+        open_alert = db.query(Alert).filter(
+            Alert.type == "feeding",
+            Alert.device_id == device_id,
+            Alert.is_resolved == False,   # noqa: E712 — so sánh cột, không dùng `is`
+        ).first()          
+
+        # cảnh báo trường hợp thiết bị không cho ăn được 
+        if not open_alert:
+            error_messages = {
+                "ket-motor": "kẹt motor — motor đã tự dừng, cần kiểm tra thủ công",
+                "qua-gio":   "quá 2 phút chưa đủ gram — motor đã tự dừng",
+            }
+    
+            db.add(Alert(
+                type="feeding",
+                severity="critical",
+                message=f"'{device.name}': {error_messages.get(error_code, error_code)}",
+                flock_id=device.flock_id,
+                device_id=device_id,
+            ))
+            db.commit()
+        logger.error(f"DEVICE STATUS: {device.name} lỗi '{error_code}' — đã cảnh báo")
+
+    # lưu thông tin dữ bị và khối luowgj dã cho ăn       
+    elif state == "done":
+        device.status = "online"
+        db.commit()
+        logger.info(
+            f"DEVICE STATUS: {device.name} cho ăn xong"
+            f"{payload.get('actual_grams')}/{payload.get('target_grams')}g"
+        )
+
+    # lỗi nàm ngoài dự kiến 
+    else:
+        logger.warning(f"state lạ trên {topic}: {state}")
+
+
+
+
+
+
+
+
+
+
+
 
 
 def _handle_message(db: Session, topic: str, payload: dict):
@@ -101,9 +187,16 @@ def _worker_loop():
             item = message_queue.get()   # blocking — chưa có msg thì ngủ tại đây
             if item is _STOP:            # nhận tín hiệu dừng từ stop_worker()
                 break
+
+
             topic, payload = item
             try:
-                _handle_message(db, topic, payload)
+                if topic.startswith("farm/sensor/"):
+                    _handle_message(db, topic, payload)          # code cũ — không đổi
+                elif topic.startswith("farm/device/") and topic.endswith("/status"):
+                    _handle_device_status(db, topic, payload)    # mới
+                else:
+                    logger.warning(f"Loai message khong nhan dien, bo qua: {topic}")
             except Exception as e:       # 1 lỗi lẻ không được giết chết worker
                 db.rollback()
                 logger.error(f"Lỗi xử lý message {topic}: {e}")

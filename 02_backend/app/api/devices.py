@@ -10,7 +10,7 @@ from ..core.security import get_current_user
 from ..database import get_db
 from ..models.device import Device
 from ..models.flock import Flock
-from .schemas import DeviceCreate, DeviceResponse
+from .schemas import DeviceCreate, DeviceResponse, DeviceConfig
 
 
 
@@ -92,3 +92,29 @@ def delete_device(
     db.delete(device)
     db.commit()
     return {"message": "Đã xóa"}
+
+@router.put("/devices/{device_id}/config", response_model=DeviceResponse)
+def configure_device(
+    device_id: int,
+    config: DeviceConfig,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    """
+    Gửi cấu hình xuống thiết bị qua MQTT.
+
+    Lưu ý: config không lưu db - chỉ chuyển tới thiết bị
+    nếu về sau cần lưu thì thêm cột json vào bảng devices 
+    """
+
+    device = db.query(Device).filter(Device.id == device_id).first()
+    if not device:
+        raise HTTPException(status_code=404, detail="Thiết bị không tồn tại")
+
+    executor = CommandExecutor(db, mqtt_handler)
+    if not executor.send_command(device_id, "CONFIG", config.config):
+        raise HTTPException(
+            status_code=503,
+            detail="Không gửi được lệnh MQTT (broker chưa kết nối?)",
+        )
+    return device   # config không đổi trạng thái device → trả về hiện trạng
