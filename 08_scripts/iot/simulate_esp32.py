@@ -134,4 +134,4 @@ def main():
 DEVICE_ID = 1  # sẽ được gán lại từ args trong main()
 
 if __name__ == "__main__":
-    main(CLIENT = None )
+    main()

@@ -45,10 +45,6 @@ async def lifespan(app: FastAPI):
         mqtt_handler.subscribe("farm/sensor/+", uplink.on_sensor_message)
         mqtt_handler.subscribe("farm/device/+/status",uplink.on_device_status)
         uplink.start_worker()
-
-
-        
-        uplink.start_worker()
         feeding_scheduler.start_scheduler()
         climate_control.start_climate()
 
