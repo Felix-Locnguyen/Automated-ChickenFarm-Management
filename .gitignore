@@ -14,8 +14,10 @@ env/
 # ===== Machine learning: file model nặng, không commit =====
 *.pt
 *.onnx
-04_machine_learning/02_models/
+04_machine_learning/models/
 04_machine_learning/datasets/
+04_machine_learning/training/chicken_detection/runs/
+runs/
 # ===== Frontend =====
 node_modules/
 01_frontend/dist/
