@@ -15,7 +15,7 @@ env/
 *.pt
 *.onnx
 04_machine_learning/02_models/
-
+04_machine_learning/datasets/
 # ===== Frontend =====
 node_modules/
 01_frontend/dist/
