@@ -52,6 +52,13 @@ def simulate_feed_motor(amount_kg: float):
     print(f"  ✅ Cân xác nhận đủ {amount_kg}kg — motor DỪNG")
 
 
+    if CLIENT:
+        status = {"state": "done",
+                  "actual_grams": amount_kg * 1000 - 2.0,   # mô phỏng lệch 2g
+                  "target_grams": amount_kg * 1000}
+        CLIENT.publish(f"farm/device/{DEVICE_ID}/status", json.dumps(status))
+        print(f"  📤 Đã báo status done về backend ({status['actual_grams']}g)")
+
 def on_message(client, userdata, msg):
     """Nhận lệnh từ backend — chạy trong network thread của paho."""
     try:
@@ -75,6 +82,9 @@ def on_message(client, userdata, msg):
                          daemon=True).start()
     elif command == "SET_SPEED":
         print(f"  🌀 Quạt chạy mức {data.get('params', {}).get('speed')}%")
+    elif command == "CONFIG":
+        print(f"  ⚙️  Cấu hình mới: {data.get('params')}")
+    
     else:
         print("  ❓ Lệnh không nhận diện được — bỏ qua")
 
@@ -88,13 +98,18 @@ def on_connect(client, userdata, flags, rc):
 
 
 def main():
-    global DEVICE_ID
+    global DEVICE_ID, CLIENT
     parser = argparse.ArgumentParser(description="Giả lập ESP32 farm")
     parser.add_argument("--broker", default="localhost")
     parser.add_argument("--device-id", type=int, default=13,
                         help="device_id trong DB — topic sensor/command sẽ dùng id này")
     parser.add_argument("--interval", type=float, default=5.0,
                         help="giây giữa 2 lần publish readings")
+    parser.add_argument("--no-sensor", action="store_true",
+                        help="chỉ nghe lệnh, không publish readings "
+                             "(tránh đè reading của node cảm biến thật)")
+
+    
     args = parser.parse_args()
     DEVICE_ID = args.device_id
 
@@ -117,11 +132,12 @@ def main():
             scenario_name, reading = SCENARIOS[
                 (cycle // SCENARIO_EVERY_N_PUBLISHES) % len(SCENARIOS)
             ]
-            payload = dict(reading, device_id=DEVICE_ID)
-            client.publish(f"farm/sensor/{DEVICE_ID}", json.dumps(payload))
-            print(f"📤 [{scenario_name}] temp={reading['temperature']}°C "
-                  f"hum={reading['humidity']}% food={reading['food_level']}% "
-                  f"water={reading['water_level']}%")
+            if not args.no_sensor:
+                payload = dict(reading, device_id=DEVICE_ID)
+                client.publish(f"farm/sensor/{DEVICE_ID}", json.dumps(payload))
+                print(f"📤 [{scenario_name}] temp={reading['temperature']}°C "
+                    f"hum={reading['humidity']}% food={reading['food_level']}% "
+                    f"water={reading['water_level']}%")
             cycle += 1
             time.sleep(args.interval)
     except KeyboardInterrupt:
@@ -132,6 +148,6 @@ def main():
 
 
 DEVICE_ID = 1  # sẽ được gán lại từ args trong main()
-
+CLIENT = None # paho client — main() sẽ gán vào, để thread motor publish status được
 if __name__ == "__main__":
     main()
