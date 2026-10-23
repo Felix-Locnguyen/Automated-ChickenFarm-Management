@@ -11,7 +11,7 @@ RAW_DIR = ML_ROOT / "datasets" / "chicken_v2"        # DỮ LIỆU GỐC (polygo
 YOLO_DIR = ML_ROOT / "datasets" / "chicken_v2_yolo"  # sau GĐ1: bbox, chỉ mẫu hợp lệ
 EVAL_DIR = ML_ROOT / "evaluation"                    # báo cáo + biểu đồ + log
 FIG_DIR = EVAL_DIR / "figures"
-RUNS_DIR = ML_ROOT / "training" / "chicken_detection" / "runs"
+RUNS_DIR = ML_ROOT / "models" / "chicken_detection" / "runs"   # weight + results.csv (bạn đã dời sang models/)
 
 DATA_YAML = YOLO_DIR / "data.yaml"                   # ultralytics đọc file này
 REPORT_CSV = EVAL_DIR / "data_report.csv"            # báo cáo kiểm tra từng mẫu

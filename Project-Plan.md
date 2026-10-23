@@ -146,8 +146,15 @@ Xây dựng hệ thống **quản lý trang trại gà tự động hóa**, gồ
 
 *Mục tiêu: ảnh camera → cloud → YOLO → chỉ ảnh bệnh được lưu & hiển thị.*
 
+**ML nội bộ — Nhận diện broiler (local, trước khi tích hợp cloud):**
+- [x] Chuẩn bị dataset `Chicken.v2-wideangle_yewon_v2` + GĐ1 kiểm tra/xử lý (polygon→bbox, 120/5/5 mẫu, `data_report.csv` + fig01-05)
+- [x] GĐ2 — xem trước augmentation động: xám / đèn ấm / nhiễu (fig13)
+- [x] GĐ3 — train **yolo26n** + **yolo26s** (8.2 phút, early-stop; nano: mAP50=0.923 / mAP50-95=0.659, small: 0.910 / 0.657)
+- [x] Refactor `pipeline.py` → 10 module (config/encoding/data_check/data_process/features/viz/training/evaluation/report) — commit `a64d549`
+- [x] GĐ4 — benchmark test set thủ công (`--stage eval` → `validation_report.md`: IoU-variants, P/R/F1/mAP, CM, speed, complexity) *(23/10: nano F1=0.903/mAP50=0.889, small F1=0.914/mAP50=0.914 — small nhỉnh hơn trên test 5 ảnh; ~75 FPS GPU)*
+
 - [ ] Dựng `cloud/yolo-service/` (Docker): FastAPI nhỏ nhận ảnh, chạy YOLOv8 `best.pt` (model đã có trong `04_machine_learning/`)
-- [ ] Viết script xuất model YOLO → `best.pt` dùng được (từ `02_models` — cần train lại nếu không có file)
+- [x] Viết script xuất model YOLO → `best.pt` dùng được *(23/10: đã train — `training/chicken_detection/runs/{yolo26n,yolo26s}/weights/best.pt`)*
 - [ ] Cài MinIO (S3-compatible) qua docker-compose để lưu **ảnh bệnh**
 - [ ] ESP32-CAM: chụp ảnh định kỳ (vd 30–60s) → POST lên backend `/api/camera/snapshot`
 - [ ] Backend: nhận ảnh → gửi sang `yolo-service` inference → nếu **phát hiện bệnh**:
@@ -256,4 +263,4 @@ Xây dựng hệ thống **quản lý trang trại gà tự động hóa**, gồ
 
 ---
 
-*Cập nhật lần đầu: 16/10/2026. Cập nhật gần nhất: 21/10/2026 (Phase 2 — Bước A). Tài liệu này sống — sửa dần khi dự án tiến triển.*
+*Cập nhật lần đầu: 16/10/2026. Cập nhật gần nhất: 23/10/2026 (Phase 3 — ML nội bộ **hoàn thành cả 4 giai đoạn** (dataset→train→eval, validation_report.md); tiếp theo: tích hợp cloud). Tài liệu này sống — sửa dần khi dự án tiến triển.*
