@@ -29,7 +29,7 @@ docker-data/
 *.db
 
 # ===== Ảnh camera runtime (MinIO local fallback) =====
-02_backend/storage/
+02_backend/app/storage/
 
 # ===== Hệ điều hành / IDE =====
 .DS_Store
