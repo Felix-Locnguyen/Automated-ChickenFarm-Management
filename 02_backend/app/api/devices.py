@@ -3,6 +3,13 @@
 Phần "gửi lệnh MQTT xuống thiết bị thật" sẽ nối vào đây ở Phase 2;
 hiện tại chỉ quản lý trạng thái trong DB.
 """
+import base64
+import io
+import os
+import secrets
+from datetime import datetime, timezone
+import qrcode
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -10,7 +17,7 @@ from ..core.security import get_current_user
 from ..database import get_db
 from ..models.device import Device
 from ..models.flock import Flock
-from .schemas import DeviceCreate, DeviceResponse, DeviceConfig
+from .schemas import DeviceCreate, DeviceResponse, DeviceConfig, DevicePairRequest
 
 
 
@@ -20,7 +27,41 @@ from ..iot.mqtt.connection import mqtt_handler
 
 router = APIRouter()
 
+# Base URL của web để ghép chuỗi token vào QR (đổi qua env khi deploy)
+PAIR_BASE_URL = os.getenv("PAIR_BASE_URL", "http://localhost:5173")
 
+# Bỏ 0/O/1/I/L — ký tự dễ nhầm khi đọc mã dán trên thiết bị
+PAIR_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+
+# sinh code
+def _gen_pairing_code(db: Session) -> str:
+    """Sinh code 6 ký tự. secrets = CSPRNG (khó đoán) — không dùng random
+    thường, vì đoán được code là ghép được thiết bị của người khác.
+    Vòng lặp + unique index: nếu trùng (xác suất rất thấp) thì sinh lại."""
+    while True:
+        code = "".join(secrets.choice(PAIR_ALPHABET) for _ in range(6))
+        if not db.query(Device).filter(Device.pairing_code == code).first():
+            return code
+
+
+def _qr_base64(text: str) -> str:
+    """
+    Text -> ảnh QR định dạng PNG -> data-URI base64
+
+    data:image/png;base64,... là chuỗi tự chứa — frontend gắn thẳng vào
+    <img src={qr_image}> không cần lưu file hay thêm endpoint serve ảnh.
+    """
+
+    qr = qrcode.QRCode(box_size=8, border=2)
+    qr.add_data(text)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+
+    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+
+# =================================================================
 @router.get("/devices", response_model=list[DeviceResponse])
 def get_devices(flock_id: int = None, db: Session = Depends(get_db)):
     """Danh sách thiết bị — tùy chọn lọc theo chuồng."""
@@ -36,11 +77,16 @@ def create_device(
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
-    """Thêm thiết bị — validate đàn gà phải tồn tại trước."""
-    flock = db.query(Flock).filter(Flock.id == device.flock_id).first()
-    if not flock:
-        raise HTTPException(status_code=404, detail="Chuồng không tồn tại")
+    """Thêm thiết bị — validate đàn gà phải tồn tại trước (nếu có chọn chuồng).
+
+    flock_id = None → thiết bị chưa thuộc ai, ghép sau bằng QR (/devices/pair).
+    """
+    if device.flock_id is not None:
+        flock = db.query(Flock).filter(Flock.id == device.flock_id).first()
+        if not flock:
+            raise HTTPException(status_code=404, detail="Chuồng không tồn tại")
     db_device = Device(**device.dict())
+    db_device.pairing_code = _gen_pairing_code(db)
     db.add(db_device)
     db.commit()
     db.refresh(db_device)
@@ -118,3 +164,60 @@ def configure_device(
             detail="Không gửi được lệnh MQTT (broker chưa kết nối?)",
         )
     return device   # config không đổi trạng thái device → trả về hiện trạng
+
+
+@router.get("/devices/{device_id}/qr")
+def get_device_qr(
+    device_id: int,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    """
+    QR ghép thiết bị. code sinh 1  lần rồi giữ vĩnh viễn - in QR để dán trên thiết bị 
+    """
+
+    device = db.query(Device).filter(Device.id == device_id).first()
+    if not device:
+        raise HTTPException(status_code=404, detail="Thiết bị không tồn tại")
+    if not device.pairing_code:
+        device.pairing_code = _gen_pairing_code(db)
+        db.commit()
+        db.refresh(device)
+
+    
+    pair_url = f"{PAIR_BASE_URL}/?token={device.pairing_code}"
+    return {
+        "device_id": device.id,
+        "pairing_code": device.pairing_code,
+        "pair_url": pair_url,
+        "qr_image": _qr_base64(pair_url),
+    }
+
+
+@router.post("/devices/pair", response_model=DeviceResponse)
+def pair_device(
+    payload: DevicePairRequest,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    """
+    Ghép thiết bị vào trang trại
+    """
+    device = db.query(Device).filter(Device.pairing_code == payload.pairing_code).first()
+    if not device:
+        raise HTTPException(status_code=404, detail="Mã QR không đúng")
+    if device.flock_id:
+        raise HTTPException(status_code= 400, detail="Thiết bị đã được ghép nối trong trại từ trước")
+    
+    flock = db.query(Flock).filter(Flock.owner_id == user.id).first()
+    if not flock:
+        raise HTTPException(
+            status_code=400,
+            detail="Bạn chưa có đàn gà nào — tạo đàn trước khi ghép thiết bị",
+        )
+
+    device.flock_id = flock.id
+    device.paired_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(device)
+    return device

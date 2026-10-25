@@ -12,7 +12,10 @@ class Device(Base):
     type = Column(String(50), nullable=False)  # fan, light, feeder, camera
     status = Column(String(50), default="offline")  # online, offline, warning
     is_active = Column(Boolean, default=False)
+
     flock_id = Column(Integer, ForeignKey("flocks.id"))
+    pairing_code = Column(String(6), unique=True, index=True, nullable=True)
+    paired_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships
