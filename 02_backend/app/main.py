@@ -6,11 +6,13 @@ Mở Swagger để test: http://localhost:8000/docs
 """
 from contextlib import asynccontextmanager
 import logging
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
-from app.api import analytics, auth, environment, feeding, financial, health, records, alerts, devices
+from app.api import analytics, auth, camera, environment, feeding, financial, health, records, alerts, devices
 from app.database import Base, engine
 from app.iot import uplink
 from app.iot.mqtt.connection import mqtt_handler
@@ -81,8 +83,13 @@ app.add_middleware(
 # include_router: ghép từng router vào app.
 # prefix="/api" → mọi endpoint trong router đều thêm tiền tố /api
 # (ví dụ "/auth/login" thành "/api/auth/login")
-for router_module in [auth, environment, feeding, records, health, analytics, financial, alerts, devices]:
+for router_module in [auth, environment, feeding, records, health, analytics, financial, alerts, devices, camera]:
     app.include_router(router_module.router, prefix="/api")
+
+# Ảnh camera lưu local (fallback khi MinIO chưa chạy) → serve tại /storage/camera/<tên>
+CAMERA_STORAGE = Path(__file__).parent / "storage" / "camera"
+CAMERA_STORAGE.mkdir(parents=True, exist_ok=True)
+app.mount("/storage/camera", StaticFiles(directory=str(CAMERA_STORAGE)), name="camera_storage")
 
 
 @app.get("/health")
