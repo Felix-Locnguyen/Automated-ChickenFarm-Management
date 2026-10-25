@@ -134,12 +134,18 @@ class DeviceResponse(BaseModel):
     status: str
     is_active: bool
     flock_id: int
+    pairing_code: Optional[str] = None
+    paired_at: Optional[datetime] = None
     created_at: datetime
 
     class Config:
         orm_mode = True
 
 
+class DevicePairRequest(BaseModel):
+    pairing_code: str
+
+    
 # 8   FINANCIAL RECORD
 class FinancialRecordCreate(BaseModel):
     flock_id: Optional[int] = None  # phiếu "Thức ăn/Thuốc" có thể áp dụng chung nhiều chuồng
