@@ -4,7 +4,7 @@ Phần "gửi lệnh MQTT xuống thiết bị thật" sẽ nối vào đây ở
 hiện tại chỉ quản lý trạng thái trong DB.
 """
 import base64
-import io 
+import io
 import os
 import secrets
 from datetime import datetime, timezone
@@ -34,12 +34,12 @@ PAIR_BASE_URL = os.getenv("PAIR_BASE_URL", "http://localhost:5173")
 PAIR_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 
 # sinh code
-def _gen_pairing_code(db:Session) -> str:
-    """Sinh code 6 ký tự, secrets = CSPRNG (khó đoán)- không dùng hàm random thường, vì có thể 
-    có thể đoán được code là ghép được thiết bị của người khác.
+def _gen_pairing_code(db: Session) -> str:
+    """Sinh code 6 ký tự. secrets = CSPRNG (khó đoán) — không dùng random
+    thường, vì đoán được code là ghép được thiết bị của người khác.
     Vòng lặp + unique index: nếu trùng (xác suất rất thấp) thì sinh lại."""
     while True:
-        code ="".join(secrets.choice(PAIR_ALPHABET) for _ in range(6))
+        code = "".join(secrets.choice(PAIR_ALPHABET) for _ in range(6))
         if not db.query(Device).filter(Device.pairing_code == code).first():
             return code
 
@@ -77,10 +77,14 @@ def create_device(
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
-    """Thêm thiết bị — validate đàn gà phải tồn tại trước."""
-    flock = db.query(Flock).filter(Flock.id == device.flock_id).first()
-    if not flock:
-        raise HTTPException(status_code=404, detail="Chuồng không tồn tại")
+    """Thêm thiết bị — validate đàn gà phải tồn tại trước (nếu có chọn chuồng).
+
+    flock_id = None → thiết bị chưa thuộc ai, ghép sau bằng QR (/devices/pair).
+    """
+    if device.flock_id is not None:
+        flock = db.query(Flock).filter(Flock.id == device.flock_id).first()
+        if not flock:
+            raise HTTPException(status_code=404, detail="Chuồng không tồn tại")
     db_device = Device(**device.dict())
     db_device.pairing_code = _gen_pairing_code(db)
     db.add(db_device)
@@ -174,9 +178,9 @@ def get_device_qr(
 
     device = db.query(Device).filter(Device.id == device_id).first()
     if not device:
-        raise HTTPException(status_code= 404, detail= "Thiết bị không tồn tại")
+        raise HTTPException(status_code=404, detail="Thiết bị không tồn tại")
     if not device.pairing_code:
-        device .pairing_code = _gen_pairing_code(db)
+        device.pairing_code = _gen_pairing_code(db)
         db.commit()
         db.refresh(device)
 
@@ -201,7 +205,7 @@ def pair_device(
     """
     device = db.query(Device).filter(Device.pairing_code == payload.pairing_code).first()
     if not device:
-        raise HTTPException(status_code= 404, detail="Mã QR không đúng")
+        raise HTTPException(status_code=404, detail="Mã QR không đúng")
     if device.flock_id:
         raise HTTPException(status_code= 400, detail="Thiết bị đã được ghép nối trong trại từ trước")
     

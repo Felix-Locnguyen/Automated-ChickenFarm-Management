@@ -125,7 +125,7 @@ class HealthRecordResponse(BaseModel):
 class DeviceCreate(BaseModel):
     name: str
     type: str
-    flock_id: int
+    flock_id: Optional[int] = None    # None = thiết bị "mới ra lò", CHƯA ghép chuồng (ghép bằng QR)
 
 class DeviceResponse(BaseModel):
     id: int
@@ -133,7 +133,7 @@ class DeviceResponse(BaseModel):
     type: str
     status: str
     is_active: bool
-    flock_id: int
+    flock_id: Optional[int] = None    # None = chưa ghép (int chặt sẽ 500 khi trả thiết bị mới)
     pairing_code: Optional[str] = None
     paired_at: Optional[datetime] = None
     created_at: datetime

@@ -1,9 +1,11 @@
+"""Test ghép thiết bị qua pairing code (B6 — Phase 4).
+
+Vòng đời: đăng ký+đăng nhập → tạo đàn → tạo thiết bị CHƯA ghép → GET qr → POST pair
+"""
 import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
-
-
 
 
 @pytest.fixture(scope="module")
@@ -32,13 +34,15 @@ def flock_id(client, auth_headers):
 
 
 @pytest.fixture()
-def device(client, auth_headers, flock_id):
+def device(client, auth_headers):
+    """Thiết bị MỚI — chưa ghép chuồng (flock_id=None), ghép bằng QR ở test pair."""
     r = client.post("/api/devices",
-                    json={"name": "Camera QR", "type": "camera", "flock_id": flock_id},
+                    json={"name": "Camera QR", "type": "camera"},
                     headers=auth_headers)
     assert r.status_code == 200
     body = r.json()
     assert body["pairing_code"]          # tạo thiết bị phải có code ngay
+    assert body["flock_id"] is None      # chưa ghép → QR mới có việc để làm
     return body
 
 
@@ -60,11 +64,17 @@ def test_pair_thanh_cong(client, auth_headers, flock_id, device):
     assert r.json()["paired_at"] is not None
 
 
-def test_pair_lai_bi_tu_choi(client, auth_headers, device):
-    r = client.post("/api/devices/pair",
-                    json={"pairing_code": device["pairing_code"]},
-                    headers=auth_headers)
-    assert r.status_code == 400                              # đã ghép rồi → 400
+def test_pair_lai_bi_tu_choi(client, auth_headers, flock_id, device):
+    # Lần 1: thiết bị chưa ghép + user có đàn → ghép được
+    r1 = client.post("/api/devices/pair",
+                     json={"pairing_code": device["pairing_code"]},
+                     headers=auth_headers)
+    assert r1.status_code == 200
+    # Lần 2: đã ghép rồi → 400 (đúng lý do: flock_id đã có)
+    r2 = client.post("/api/devices/pair",
+                     json={"pairing_code": device["pairing_code"]},
+                     headers=auth_headers)
+    assert r2.status_code == 400
 
 
 def test_pair_sai_code_tra_404(client, auth_headers):
