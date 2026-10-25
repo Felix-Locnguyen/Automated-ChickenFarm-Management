@@ -2,8 +2,16 @@
 
 Vòng đời: đăng ký+đăng nhập → tạo đàn → tạo thiết bị CHƯA ghép → GET qr → POST pair
 """
+import sys
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
+
+# Chạy trực tiếp file (python pairing.py / nút Run trong editor) thì KHÔNG qua
+# pytest → conftest.py không được nạp → tự nạp đường dẫn 02_backend cho chắc.
+# parents[3] = gốc repo (test → 02_integration → 07_tests → repo)
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "02_backend"))
 
 from app.main import app
 

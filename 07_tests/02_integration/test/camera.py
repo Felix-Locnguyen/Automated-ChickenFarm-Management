@@ -8,10 +8,15 @@ Chạy: pytest 07_tests/02_integration/test/camera.py -v
   3. yolo-service chết → 502
 """
 import io
+import sys
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
+
+# Bootstrap giống pairing.py: chạy trực tiếp file không qua conftest
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "02_backend"))
 
 from app.main import app
 from app.services import camera_service
