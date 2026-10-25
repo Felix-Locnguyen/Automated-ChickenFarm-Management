@@ -13,6 +13,7 @@ import qrcode
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from ..core.authz import get_owned_device, get_owned_flock, is_admin
 from ..core.security import get_current_user
 from ..database import get_db
 from ..models.device import Device
@@ -63,12 +64,21 @@ def _qr_base64(text: str) -> str:
 
 # =================================================================
 @router.get("/devices", response_model=list[DeviceResponse])
-def get_devices(flock_id: int = None, db: Session = Depends(get_db)):
-    """Danh sách thiết bị — tùy chọn lọc theo chuồng."""
+def get_devices(flock_id: int = None, db: Session = Depends(get_db),
+                user=Depends(get_current_user)):
+    """Danh sách thiết bị — tùy chọn lọc theo chuồng.
+
+    User thấy: thiết bị CHƯA GHÉP (vô chủ, để ghép QR) + thiết bị thuộc chuồng mình.
+    Admin thấy tất (B7 owner scoping).
+    """
     query = db.query(Device)
     if flock_id:
         query = query.filter(Device.flock_id == flock_id)
-    return query.order_by(Device.id).all()
+    devices = query.order_by(Device.id).all()
+    if is_admin(user):
+        return devices
+    my_flock_ids = [f.id for f in db.query(Flock).filter(Flock.owner_id == user.id)]
+    return [d for d in devices if d.flock_id is None or d.flock_id in my_flock_ids]
 
 
 @router.post("/devices", response_model=DeviceResponse)
@@ -82,9 +92,7 @@ def create_device(
     flock_id = None → thiết bị chưa thuộc ai, ghép sau bằng QR (/devices/pair).
     """
     if device.flock_id is not None:
-        flock = db.query(Flock).filter(Flock.id == device.flock_id).first()
-        if not flock:
-            raise HTTPException(status_code=404, detail="Chuồng không tồn tại")
+        get_owned_flock(db, device.flock_id, user)   # 404 nếu không tồn tại hoặc của người khác
     db_device = Device(**device.dict())
     db_device.pairing_code = _gen_pairing_code(db)
     db.add(db_device)
@@ -107,11 +115,7 @@ def toggle_device(
       web hiển thị "đã bật" trong khi quạt không quay).
     """
 
-    device = db.query(Device).filter(Device.id == device_id).first()
-
-    if not device:
-        raise HTTPException(status_code=404, detail="Thiết bị không tồn tại")
-    
+    device = get_owned_device(db, device_id, user)   # kiểm quyền TRƯỚC khi chạm MQTT
 
     executor = CommandExecutor(db, mqtt_handler) 
     success = executor.toggle_device(device_id) # tính trạng thái mới → send_command() publish → chỉ commit nếu publish OK.
@@ -132,9 +136,7 @@ def delete_device(
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
-    device = db.query(Device).filter(Device.id == device_id).first()
-    if not device:
-        raise HTTPException(status_code=404, detail="Thiết bị không tồn tại")
+    device = get_owned_device(db, device_id, user)
     db.delete(device)
     db.commit()
     return {"message": "Đã xóa"}
@@ -153,9 +155,7 @@ def configure_device(
     nếu về sau cần lưu thì thêm cột json vào bảng devices 
     """
 
-    device = db.query(Device).filter(Device.id == device_id).first()
-    if not device:
-        raise HTTPException(status_code=404, detail="Thiết bị không tồn tại")
+    device = get_owned_device(db, device_id, user)
 
     executor = CommandExecutor(db, mqtt_handler)
     if not executor.send_command(device_id, "CONFIG", config.config):
@@ -176,9 +176,7 @@ def get_device_qr(
     QR ghép thiết bị. code sinh 1  lần rồi giữ vĩnh viễn - in QR để dán trên thiết bị 
     """
 
-    device = db.query(Device).filter(Device.id == device_id).first()
-    if not device:
-        raise HTTPException(status_code=404, detail="Thiết bị không tồn tại")
+    device = get_owned_device(db, device_id, user)   # vô chủ → xem QR OK; của người khác → 404
     if not device.pairing_code:
         device.pairing_code = _gen_pairing_code(db)
         db.commit()
