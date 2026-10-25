@@ -28,6 +28,9 @@ docker-data/
 # ===== SQLite DB (file dữ liệu — KHÔNG commit) =====
 *.db
 
+# ===== Ảnh camera runtime (MinIO local fallback) =====
+02_backend/app/storage/
+
 # ===== Hệ điều hành / IDE =====
 .DS_Store
 Thumbs.db

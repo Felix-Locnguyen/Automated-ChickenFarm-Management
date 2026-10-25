@@ -167,6 +167,11 @@ export function resolveAlert(id) {
 }
 
 
+//                          CAMERA
+export function fetchLatestDetection() {
+  return request('/camera/latest');        // { detection: {...} | null }
+}
+
 
 //                          ANALYTICS
 export function fetchDashboard() {

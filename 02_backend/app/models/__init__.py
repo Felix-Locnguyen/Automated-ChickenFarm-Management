@@ -6,4 +6,5 @@ from .sensor.reading import SensorReading
 from .feeding.log import FeedingLog
 from .health.record import HealthRecord
 from .financial.record import FinancialRecord
+from .disease_detection import DiseaseDetection
 

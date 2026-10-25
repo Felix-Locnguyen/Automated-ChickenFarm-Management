@@ -1,0 +1,42 @@
+# ═══════════════════════════════════════════════════════════════
+#  docker-compose — B2: MinIO (S3-compatible) lưu ẢNH BỆNH
+#  Chạy:   docker compose -f 05_docker/docker-compose.yml up -d
+#  Console: http://localhost:9001  (farmminio / farmminio123)
+#  Ghi chú: user/pass mặc định cho LOCAL dev — production phải
+#           đọc từ .env!
+# ═══════════════════════════════════════════════════════════════
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: farm-minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Web console
+    environment:
+      MINIO_ROOT_USER: farmminio
+      MINIO_ROOT_PASSWORD: farmminio123
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Job một lần: tạo bucket disease-images khi khởi động lần đầu
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 farmminio farmminio123 &&
+      mc mb --ignore-existing local/disease-images &&
+      mc anonymous set download local/disease-images &&
+      echo '=== Bucket disease-images san sang ==='
+      "
+
+volumes:
+  minio-data:

@@ -13,6 +13,11 @@ export default defineConfig({
       '/api': {
         target:  'http://localhost:8000',  // địa chỉ backend (uvicorn)
          changeOrigin: true,               // giả lập request từ chính domain backend
+      },
+      // ảnh camera lưu local (fallback MinIO) — cùng backend với /api
+      '/storage': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
       }
     }
   }

@@ -12,7 +12,7 @@ export default function Dashboard({ farmData, onSelectCoop, showAlertModal, onSh
         coops={farmData.coops}
         activeAlertsCount={farmData.activeAlertsCount}
       />
-      <DiseaseDetectionBox detections={farmData.diseaseDetections} />
+      <DiseaseDetectionBox />
       <h3 className="section-title">🏠 Danh sách chuồng nuôi</h3>
       <CoopsList coops={farmData.coops} onSelectCoop={onSelectCoop} />
 
