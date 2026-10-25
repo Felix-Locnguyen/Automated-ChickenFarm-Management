@@ -1,0 +1,8 @@
+# cloud/yolo-service — dependency
+# Lưu ý: torch cài kèm ultralytics (Docker sẽ lấy bản CPU mặc định;
+# máy có GPU muốn chạy CUDA thì cài torch trước theo pytorch.org)
+fastapi>=0.110
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9
+pillow>=10.0
+ultralytics>=8.4
