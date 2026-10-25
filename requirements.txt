@@ -11,3 +11,8 @@ python-jose[cryptography]
 python-multipart
 pytest
 httpx
+pytest
+pandas
+numpy
+
+
