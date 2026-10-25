@@ -153,18 +153,18 @@ Xây dựng hệ thống **quản lý trang trại gà tự động hóa**, gồ
 - [x] Refactor `pipeline.py` → 10 module (config/encoding/data_check/data_process/features/viz/training/evaluation/report) — commit `a64d549`
 - [x] GĐ4 — benchmark test set thủ công (`--stage eval` → `validation_report.md`: IoU-variants, P/R/F1/mAP, CM, speed, complexity) *(23/10: nano F1=0.903/mAP50=0.889, small F1=0.914/mAP50=0.914 — small nhỉnh hơn trên test 5 ảnh; ~75 FPS GPU)*
 
-- [ ] Dựng `cloud/yolo-service/` (Docker): FastAPI nhỏ nhận ảnh, chạy YOLOv8 `best.pt` (model đã có trong `04_machine_learning/`)
+- [x] Dựng `cloud/yolo-service/` (Docker): FastAPI nhỏ nhận ảnh, chạy YOLOv8 `best.pt` *(25/10: `cloud/yolo-service/` — POST /detect + Dockerfile + README; test pass 60 bbox; **build image chưa test** — chưa có Docker)*
 - [x] Viết script xuất model YOLO → `best.pt` dùng được *(23/10: đã train — `training/chicken_detection/runs/{yolo26n,yolo26s}/weights/best.pt`)*
-- [ ] Cài MinIO (S3-compatible) qua docker-compose để lưu **ảnh bệnh**
-- [ ] ESP32-CAM: chụp ảnh định kỳ (vd 30–60s) → POST lên backend `/api/camera/snapshot`
-- [ ] Backend: nhận ảnh → gửi sang `yolo-service` inference → nếu **phát hiện bệnh**:
-  - [ ] Lưu ảnh + bbox + nhãn bệnh + confidence vào MinIO + DB (`disease_detections` table — tạo model mới)
-  - [ ] Tạo alert tương ứng
-  - [ ] Nếu bình thường: **không lưu gì** (log discard là xong)
+- [ ] Cài MinIO (S3-compatible) qua docker-compose để lưu **ảnh bệnh** *(25/10: đã viết `05_docker/docker-compose.yml` (minio + auto-create bucket) + `08_scripts/minio_init.py` — **chờ cài Docker**; backend đang fallback ảnh local `/storage/camera/`)*
+- [ ] ESP32-CAM: chụp ảnh định kỳ (vd 30–60s) → POST lên backend `/api/camera/snapshot` *(25/10: script giả lập `08_scripts/simulate_esp32cam.py` test pass 6/6 — phần cứng thật chờ board)*
+- [x] Backend: nhận ảnh → gửi sang `yolo-service` inference → nếu **phát hiện**:
+  - [x] Lưu ảnh + bbox + confidence vào DB (`disease_detections` — 25/10; MinIO chưa có → ảnh fallback local `/storage/camera/` → sẽ chuyển khi có Docker)
+  - [x] Tạo alert tương ứng *(type=camera, chống lặp — chỉ 1 alert khi chưa resolve)*
+  - [x] Nếu bình thường: **không lưu gì** (discard — test ảnh trống pass)
 - [ ] Camera quan sát tổ: snapshot lưu vòng tròn (vd giữ 24h, xóa cũ) để người dùng xem từ web
-- [ ] Frontend: hiện snapshot mới nhất (refresh tự động qua polling `/api/camera/latest`)
-- [ ] Frontend: component "Phát hiện bệnh" dùng data thật (`DiseaseDetectionBox.jsx` đã có sẵn UI) — hiển thị **ảnh thật** thay placeholder `🖼️ Ảnh model AI (Chưa tích hợp model)`
-- [ ] Xem chi tiết từng phát hiện: ảnh + bbox + thời gian + confidence
+- [x] Frontend: hiện snapshot mới nhất (refresh tự động qua polling `/api/camera/latest` — DiseaseDetectionBox tự poll 10s)
+- [x] Frontend: component "Phát hiện bệnh" dùng data thật (`DiseaseDetectionBox.jsx` viết lại — hiển thị **ảnh thật** thay placeholder `🖼️ Ảnh model AI (Chưa tích hợp model)`)
+- [x] Xem chi tiết từng phát hiện: ảnh + bbox (vẽ theo %) + thời gian + confidence *(25/10 — npm build pass)*
 - [ ] Tối ưu: resize ảnh trước khi inference, rate-limit, chỉ giữ ảnh bệnh N ngày (cleanup job)
 
 **DoD:** Camera chụp → ảnh bệnh xuất hiện trên Dashboard kèm ảnh; ảnh bình thường không xuất hiện trong DB/MinIO; xem được ảnh camera từ trình duyệt ở bất kỳ đâu có internet.
@@ -263,4 +263,4 @@ Xây dựng hệ thống **quản lý trang trại gà tự động hóa**, gồ
 
 ---
 
-*Cập nhật lần đầu: 16/10/2026. Cập nhật gần nhất: 23/10/2026 (Phase 3 — ML nội bộ **hoàn thành cả 4 giai đoạn** (dataset→train→eval, validation_report.md); tiếp theo: tích hợp cloud). Tài liệu này sống — sửa dần khi dự án tiến triển.*
+*Cập nhật lần đầu: 16/10/2026. Cập nhật gần nhất: 25/10/2026 (Phase 3 — yolo-service + snapshot API + frontend + giả lập ESP32-CAM test pass; còn MinIO/Docker, camera quan sát, tối ưu). Tài liệu này sống — sửa dần khi dự án tiến triển.*
