@@ -175,11 +175,11 @@ Xây dựng hệ thống **quản lý trang trại gà tự động hóa**, gồ
 
 *Mục tiêu: người dùng tự thêm được thiết bị/chuồng bằng cách quét QR.*
 
-- [ ] Backend: mỗi device/coop sinh `pairing_code` duy nhất (token)
-- [ ] API: `POST /devices/pair` (nhập token) + `GET /devices/{id}/qr`
-- [ ] QR chứa URL dạng `https://<ten-web>/pair?token=xxx`
+- [x] Backend: mỗi device/coop sinh `pairing_code` duy nhất (token) *(25/10: cột `pairing_code` unique 6 ký tự + `paired_at`; sinh khi tạo thiết bị, `secrets` chống đoán; test 4/4 pass)*
+- [x] API: `POST /devices/pair` (nhập token) + `GET /devices/{id}/qr` *(25/10: pair validate 404 sai code / 400 đã ghép / 400 chưa có đàn; QR trả data-URI base64; pytest tổng 32/32)*
+- [x] QR chứa URL dạng `https://<ten-web>/pair?token=xxx` *(25/10 — bản dev: `?token=` qua env `PAIR_BASE_URL`, Phase 5 deploy đổi sang https/domain thật)*
 - [ ] Dán/nhãn QR lên thiết bị vật lý khi đóng gói
-- [ ] Web: trang `/pair` — quét QR (dùng thư viện jsQR/react-qr-reader) → thiết bị tự ghép vào trang trại của user
+- [ ] Web: trang `/pair` — quét QR (dùng thư viện jsQR/react-qr-reader) → thiết bị tự ghép vào trang trại của user *(kế tiếp: B8 — đã duyệt cài jsQR)*
 - [ ] Chia quyền: multi-user — mỗi user chỉ thấy trang trại/chuồng của mình (`owner_id` đã có sẵn trong model Flock)
 - [ ] Phân quyền `farmer` / `admin` (cột role đã có sẵn, chưa dùng)
 - [ ] Thông báo cảnh báo nổi (toast + badge) khi có alert mới (polling hoặc WebSocket backend — `04_services/websocket.js` đã viết sẵn wrapper)
@@ -263,4 +263,4 @@ Xây dựng hệ thống **quản lý trang trại gà tự động hóa**, gồ
 
 ---
 
-*Cập nhật lần đầu: 16/10/2026. Cập nhật gần nhất: 25/10/2026 (Phase 3 — yolo-service + snapshot API + frontend + giả lập ESP32-CAM test pass; còn MinIO/Docker, camera quan sát, tối ưu). Tài liệu này sống — sửa dần khi dự án tiến triển.*
+*Cập nhật lần đầu: 16/10/2026. Cập nhật gần nhất: 25/10/2026 (Phase 4 **B6 QR pairing backend hoàn thành** — pairing_code + /devices/{id}/qr + /devices/pair, pytest 32/32; Phase 3 còn nợ: MinIO/Docker, camera quan sát, tối ưu; kế tiếp B7 owner scoping). Tài liệu này sống — sửa dần khi dự án tiến triển.*
