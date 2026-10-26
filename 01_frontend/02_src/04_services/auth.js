@@ -50,6 +50,7 @@ export async function login(email, password) {
   // Lưu token vào localStorage — key tùy mình đặt
   localStorage.setItem('token', data.access_token);
   localStorage.setItem('userEmail', email);
+  localStorage.setItem('userFullName', data.full_name || '');   // để App hiện tên ở header
   return { ok: true, message: 'Đăng nhập thành công' };
 }
 
@@ -62,6 +63,7 @@ export function getToken() {
 export function logout() {
   localStorage.removeItem('token');
   localStorage.removeItem('userEmail');
+  localStorage.removeItem('userFullName');
 }
 
 

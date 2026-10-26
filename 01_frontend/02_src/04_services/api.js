@@ -182,3 +182,19 @@ export function fetchSensorHistory(deviceId, hours = 24) {
   if (deviceId) q.set('device_id', deviceId);
   return request(`/analytics/sensor-history?${q}`);
 }
+
+
+
+
+
+
+
+export function getDeviceQr(deviceId) {
+  return request(`/devices/${deviceId}/qr`);     // { pairing_code, pair_url, qr_image }
+}
+export function pairDevice(code) {
+  return request('/devices/pair', {
+    method: 'POST',
+    body: JSON.stringify({ pairing_code: code }),
+  });
+}
