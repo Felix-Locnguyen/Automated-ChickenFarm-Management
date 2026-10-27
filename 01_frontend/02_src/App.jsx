@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import './App.css';
 
 import LoginPage from './03_pages/LoginPage.jsx';
@@ -195,9 +195,31 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
+
+
+  // ref giữ id của setTimeout — toast trước đang chờ tắt mà toast mới đến thì HỦY hẹn giờ cũ,
+  // nếu không toast mới sẽ bị tắt sớm bởi timeout của toast trước
+  const toastTimer = useRef(null);
+
   const showToast = (msg) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  // ===== B9: phát hiện alert MỚI từ kết quả poll / reload =====
+  // Set chứa id các alert đã "thấy" — ref (không phải state) vì chỉ nội bộ, không cần render lại
+  const seenAlertIds = useRef(new Set());
+  const alertsPrimed = useRef(false);   // lần nạp ĐẦU TIÊN = baseline (không toast), các lần sau = phát hiện mới
+
+  const detectFreshAlerts = (alertsData) => {
+    const fresh = alertsData.filter(a => !seenAlertIds.current.has(a.id));
+    if (fresh.length > 0) {
+      fresh.forEach(a => seenAlertIds.current.add(a.id));
+      showToast(fresh.length === 1
+        ? `⚠️ ${fresh[0].coop_name || 'Hệ thống'}: ${fresh[0].message}`
+        : `⚠️ ${fresh.length} cảnh báo mới!`);
+    }
   };
 
   /** Tải lại TOÀN BỘ dữ liệu — gọi sau mỗi thao tác CRUD cho dữ liệu luôn nhất quán. */
@@ -214,6 +236,14 @@ export default function App() {
       setFlocks(flocksData);
       setDevices(devicesData);
       setAlerts(alertsData);
+      // B9: lần nạp đầu (login/F5) = baseline — alert cũ không toast;
+      // các lần reload sau CRUD → vẫn phải phát hiện alert mới
+      if (!alertsPrimed.current) {
+        alertsPrimed.current = true;
+        alertsData.forEach(a => seenAlertIds.current.add(a.id));
+      } else {
+        detectFreshAlerts(alertsData);
+      }
       setFeedingLogs(logsData);
       setFinancialRecords(recordsData);
 
@@ -240,6 +270,7 @@ export default function App() {
         const [reading, alertsData] = await Promise.all([fetchLatestReading(), fetchAlerts()]);
         setLatestReading(reading);
         setAlerts(alertsData);
+        detectFreshAlerts(alertsData);   // B9: id chưa thấy → toast "⚠️ ..." + badge tự tăng theo
       } catch {
         // mạng chập chờn ở poll thì bỏ qua — thao tác chính sẽ báo lỗi riêng
       }
@@ -488,6 +519,9 @@ export default function App() {
     // reset dữ liệu để user sau không thấy data của user trước
     setFlocks([]); setDevices([]); setAlerts([]);
     setFeedingLogs([]); setFinancialRecords([]); setLatestReading(null);
+    // B9: reset alert đã thấy — nếu không user sau sẽ bị "toast storm" của user trước
+    seenAlertIds.current = new Set();
+    alertsPrimed.current = false;
   };
 
   // ===== RENDER =====
