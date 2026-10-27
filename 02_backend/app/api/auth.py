@@ -47,4 +47,10 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
     # "sub" (subject) theo chuẩn JWT PHẢI là string → str(user.id),
     # phần get_current_user sẽ tự int() lại
     access_token = create_access_token({"sub": str(db_user.id)})
-    return {"access_token": access_token, "token_type": "bearer"}
+    # Trả kèm tên/email → frontend hiện tên ở header, không cần gọi thêm API
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "email": db_user.email,
+        "full_name": db_user.full_name,
+    }

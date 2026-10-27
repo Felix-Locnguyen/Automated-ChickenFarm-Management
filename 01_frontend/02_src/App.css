@@ -98,6 +98,17 @@
     cursor: not-allowed;
 }
 
+.login-switch {
+    margin-top: 16px;
+    font-size: 13px;
+    color: #16a34a;
+    cursor: pointer;
+}
+
+.login-switch:hover {
+    text-decoration: underline;
+}
+
 .btn-logout {
     padding: 10px;
     border-radius: 50%;

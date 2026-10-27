@@ -20,6 +20,7 @@ import {
   deleteFlock,
   fetchDevices,
   toggleDevice,
+  pairDevice,
   fetchAlerts,
   fetchLatestReading,
   fetchFeedingLogs,
@@ -169,7 +170,10 @@ export default function App() {
   // ===== Trạng thái đăng nhập =====
   // checkLoggedIn() đọc localStorage → giữ đăng nhập sau F5
   const [isLoggedIn, setIsLoggedIn] = useState(checkLoggedIn);
-  const [currentUser, setCurrentUser] = useState(() => localStorage.getItem('userEmail'));
+  // Header hiện TÊN ĐẦY ĐỦ nếu có (login đã lưu userFullName), không thì fallback email
+  const [currentUser, setCurrentUser] = useState(
+    () => localStorage.getItem('userFullName') || localStorage.getItem('userEmail'),
+  );
 
   // ===== Dữ liệu THẬT từ backend =====
   const [flocks, setFlocks] = useState([]);
@@ -243,6 +247,26 @@ export default function App() {
     return () => clearInterval(timer);
   }, [isLoggedIn]);
 
+  // B8: mở link /?token=XXXXXX (trong mã QR) → tự ghép thiết bị khi đã đăng nhập.
+  // Chưa đăng nhập → URL giữ nguyên, effect chạy lại sau khi login xong.
+  useEffect(() => {
+    if (!isLoggedIn || loading) return;              // chờ đăng nhập + tải dữ liệu xong
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    if (!token) return;
+    // Dùng xong → xóa khỏi URL ngay (tránh F5 ghép lại / token dính vào ảnh chụp màn hình)
+    params.delete('token');
+    const qs = params.toString();
+    window.history.replaceState(null, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`);
+    pairDevice(token.toUpperCase())
+      .then(async device => {
+        await loadData();
+        showToast(`Đã ghép "${device.name}" vào trang trại`);
+      })
+      .catch(err => showToast(`Lỗi ghép thiết bị: ${err.message}`));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoggedIn, loading]);
+
   // ===== ADAPTER: dữ liệu backend → dữ liệu cho từng tab =====
   const coops = useMemo(
     () => flocks.map(f => flockToCoop(f, latestReading, devices, feedingLogs, alerts, thresholdsMap)),
@@ -273,11 +297,17 @@ export default function App() {
 
   // ===== XỬ LÝ THAO TÁC =====
 
+  /** Ghép thiết bị xong (B8 — nút Quét QR / link ?token=) → tải lại + báo thành công. */
+  const handleDevicePaired = async (device) => {
+    await loadData();
+    showToast(`Đã ghép "${device.name}" vào chuồng của bạn`);
+  };
+
   /** Bật/tắt thiết bị → PUT /devices/{id}/toggle, cập nhật state từ kết quả server trả về. */
   const handleToggleDevice = async (coopId, deviceKey) => {
     const device = devices.find(d => d.flock_id === coopId && d.type === deviceKey);
     if (!device) {
-      showToast(`Chuồng này chưa có thiết bị ${deviceKey} — thêm ở Phase 2 (ghép QR)`);
+      showToast(`Chuồng này chưa có thiết bị ${deviceKey} — thêm ở tab ⚙️ Thiết bị rồi quét QR để ghép`);
       return;
     }
     try {
@@ -444,7 +474,7 @@ export default function App() {
 
   // ===== Đăng nhập / đăng xuất =====
   const handleLogin = (user) => {
-    setCurrentUser(user.email);
+    setCurrentUser(user.fullName || user.email);
     setIsLoggedIn(true);
     loadData();                    // token đã lưu → tải dữ liệu ngay
   };
@@ -558,7 +588,13 @@ export default function App() {
         )}
 
         {activeTab === 'devicesTab' && !selectedCoop && (
-          <Devices devices={uiDevices} coops={coops} onToggleDevice={handleToggleDevice} />
+          <Devices
+            devices={uiDevices}
+            coops={coops}
+            onToggleDevice={handleToggleDevice}
+            onPaired={handleDevicePaired}
+            onError={(msg) => showToast(`Lỗi: ${msg}`)}
+          />
         )}
       </main>
 

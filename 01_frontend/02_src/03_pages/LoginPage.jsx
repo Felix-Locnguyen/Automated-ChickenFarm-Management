@@ -37,8 +37,8 @@ export default function LoginPage({ onLogin }) {
           alert('Đăng ký thành công! Vui lòng đăng nhập.');
           return;
         }
-        // Đăng nhập thành công → báo cho App.jsx chuyển sang Dashboard
-        onLogin({ email });
+        // Đăng nhập thành công → báo cho App.jsx (kèm tên để hiện ở header)
+        onLogin({ email, fullName: localStorage.getItem('userFullName') || '' });
       } catch (err) {
         // fetch ném lỗi khi MẤT MẠNG hoặc backend sập
         setError('Không kết nối được máy chủ. Hãy kiểm tra backend đã chạy chưa?');
@@ -48,34 +48,47 @@ export default function LoginPage({ onLogin }) {
   };
   return (
     <div className="login-page">
-      <form onSubmit={handleSubmit} className="login-form">
-        <h1>🐔 Trang Trại Gà Thông Minh</h1>
-        <h2>{mode === 'login' ? 'Đăng nhập' : 'Đăng ký'}</h2>
+      {/* flex-col: các phần xếp DỌC, căn giữa — style ở App.css (.login-card...) */}
+      <form onSubmit={handleSubmit} className="login-card">
+        <div className="login-logo">🐔</div>
+        <h1 className="login-title">Trang Trại Gà Thông Minh</h1>
+        <p className="login-subtitle">
+          {mode === 'login' ? 'Đăng nhập để quản lý trang trại' : 'Tạo tài khoản mới'}
+        </p>
 
         {mode === 'register' && (
-          <input
-            type="text"
-            placeholder="Họ và tên"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-          />
+          <div className="login-field">
+            <label>Họ và tên</label>
+            <input
+              type="text"
+              placeholder="Họ và tên (VD: Nguyễn Văn A)"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+            />
+          </div>
         )}
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Mật khẩu"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <div className="login-field">
+          <label>Email</label>
+          <input
+            type="email"
+            placeholder="vidu@gmail.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <div className="login-field">
+          <label>Mật khẩu</label>
+          <input
+            type="password"
+            placeholder="Nhập mật khẩu"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
 
         {error && <p className="login-error">{error}</p>}
 
-        <button type="submit" disabled={loading}>
+        <button type="submit" className="login-btn" disabled={loading}>
           {loading ? 'Đang xử lý...' : mode === 'login' ? 'Đăng nhập' : 'Đăng ký'}
         </button>
 
@@ -94,6 +107,6 @@ export default function LoginPage({ onLogin }) {
 
 /* note
  e.preventDefault() — form HTML mặc định submit → reload trang → mất hết state React. Bắt buộc chặn trong SPA.
-2. loading state — tránh người dùng bấm nút 10 lần vì tưởng chưa nhận lệnh.
-3. finally — block chạy LUÔN LUÔN (kể cả khi có exception) → lý tưởng để tắt spinner.
+ 2. loading state — tránh người dùng bấm nút 10 lần vì tưởng chưa nhận lệnh.
+ 3. finally — block chạy LUÔN LUÔN (kể cả khi có exception) → lý tưởng để tắt spinner.
 */

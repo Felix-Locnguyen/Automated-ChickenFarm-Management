@@ -30,19 +30,19 @@ def _login(client, email):
 
 @pytest.fixture(scope="module")
 def user_a(client):
-    return _login(client, "a@test.vn")
+    return _login(client, "a@gmail.com")
 
 
 @pytest.fixture(scope="module")
 def user_b(client):
-    return _login(client, "b@test.vn")
+    return _login(client, "b@gmail.com")
 
 
 @pytest.fixture(scope="module")
 def admin(client):
-    h = _login(client, "admin@test.vn")
+    h = _login(client, "admin@gmail.com")
     db = SessionLocal()          # set role thẳng qua DB (API chưa có endpoint đổi role)
-    db.query(User).filter(User.email == "admin@test.vn").update({"role": "admin"})
+    db.query(User).filter(User.email == "admin@gmail.com").update({"role": "admin"})
     db.commit()
     db.close()
     return h

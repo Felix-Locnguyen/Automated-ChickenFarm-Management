@@ -179,11 +179,11 @@ Xây dựng hệ thống **quản lý trang trại gà tự động hóa**, gồ
 - [x] API: `POST /devices/pair` (nhập token) + `GET /devices/{id}/qr` *(25/10: pair validate 404 sai code / 400 đã ghép / 400 chưa có đàn; QR trả data-URI base64; pytest tổng 32/32)*
 - [x] QR chứa URL dạng `https://<ten-web>/pair?token=xxx` *(25/10 — bản dev: `?token=` qua env `PAIR_BASE_URL`, Phase 5 deploy đổi sang https/domain thật)*
 - [ ] Dán/nhãn QR lên thiết bị vật lý khi đóng gói
-- [ ] Web: trang `/pair` — quét QR (dùng thư viện jsQR/react-qr-reader) → thiết bị tự ghép vào trang trại của user *(kế tiếp: B8 — đã duyệt cài jsQR)*
-- [ ] Chia quyền: multi-user — mỗi user chỉ thấy trang trại/chuồng của mình (`owner_id` đã có sẵn trong model Flock)
-- [ ] Phân quyền `farmer` / `admin` (cột role đã có sẵn, chưa dùng)
-- [ ] Thông báo cảnh báo nổi (toast + badge) khi có alert mới (polling hoặc WebSocket backend — `04_services/websocket.js` đã viết sẵn wrapper)
-- [ ] Nâng giao diện: sửa nốt UI placeholder còn dang dở
+- [ ] Web: ghép QR — quét QR bằng jsQR (modal 📷 Quét QR + nhập code tay dự phòng) + nút 📱 Xem QR; link `/?token=` tự ghép *(26/10: **B8 code xong** — jsQR@1.4.0, `DevicePairing.jsx`, `Devices.jsx` + `App.jsx` xử lý `?token=` + xóa token khỏi URL, npm build pass; E2E: đăng nhập + mở Xem QR OK — **còn xác nhận ghép thử `POST /devices/pair`**)*
+- [x] Chia quyền: multi-user — mỗi user chỉ thấy trang trại/chuồng của mình (`owner_id` đã có sẵn trong model Flock) *(26/10: **B7** — `core/authz.py` (is_admin/get_owned_flock/get_owned_device, 404 che giấu), 5 endpoint flocks + 6 chỗ devices + alerts lọc theo chủ; commit `98e90c3`; pytest 38/38)*
+- [x] Phân quyền `farmer` / `admin` (cột role đã có sẵn) *(26/10: B7 — admin bypass mọi bộ lọc, thấy tất; alert chưa gắn flock = mọi user thấy (MVP 1 trang trại); chưa có endpoint đổi role/admin API)*
+- [ ] Thông báo cảnh báo nổi (toast + badge) khi có alert mới (polling hoặc WebSocket backend — `04_services/websocket.js` đã viết sẵn wrapper) *(đã có sẵn badge 🔔 + poll 10s + toast khi thao tác — còn toast khi alert MỚI = B9)*
+- [ ] Nâng giao diện: sửa nốt UI placeholder còn dang dở *(26/10: đăng nhập viết lại theo CSS flex-col có sẵn + placeholder Gmail + header hiện tên đầy đủ; tab Thiết bị có section chưa ghép — còn lại B10)*
 
 **DoD:** Quét QR → thiết bị/thuộc chuồng của đúng người dùng; user A không thấy chuồng của user B; có QR thật để in dán thiết bị.
 
@@ -263,4 +263,12 @@ Xây dựng hệ thống **quản lý trang trại gà tự động hóa**, gồ
 
 ---
 
-*Cập nhật lần đầu: 16/10/2026. Cập nhật gần nhất: 25/10/2026 (Phase 4 **B6 QR pairing backend hoàn thành** — pairing_code + /devices/{id}/qr + /devices/pair, pytest 32/32; Phase 3 còn nợ: MinIO/Docker, camera quan sát, tối ưu; kế tiếp B7 owner scoping). Tài liệu này sống — sửa dần khi dự án tiến triển.*
+## 7. Lưu ý vận hành SQLite (bài học 26/10)
+
+1. **`sqlite:///./farm.db` là đường dẫn TƯƠNG ĐỐI theo thư mục chạy uvicorn** — chạy từ `02_backend` thì nó trỏ `02_backend/farm.db`; chạy kiểu này với tên `test_farm.db` sẽ tạo nhầm file TRỐNG trong `02_backend/` → login luôn báo "Sai email hoặc mật khẩu" vì DB không có user nào.
+2. Chạy backend với DB test (tài khoản Gmail, thiết bị QR): `cd 02_backend && DATABASE_URL="sqlite:///$(realpath ../test_farm.db)" ../.venv/bin/uvicorn app.main:app --port 8020`
+3. Tài khoản: seed `admin@farm.vn / admin123` (ở `02_backend/farm.db`) · test `a@gmail.com / b@gmail.com / admin@gmail.com` với `matkhau123` (ở `test_farm.db` gốc — pytest tự tạo lại mỗi lần chạy).
+
+---
+
+*Cập nhật lần đầu: 16/10/2026. Cập nhật gần nhất: 26/10/2026 (Phase 4: **B7 owner scoping hoàn thành** — authz + 3 router, pytest 38/38, commit `98e90c3`; **B8 QR frontend code xong** — jsQR + Xem/Quét QR + `?token=` tự ghép, build pass, còn chốt E2E ghép; làm lại trang đăng nhập flex-col + tài khoản test Gmail; fix Vite proxy→8020 + bài học SQLite path ở mục 7. Phase 3 còn nợ: MinIO/Docker, camera quan sát, tối ưu; kế tiếp: chốt E2E ghép QR → B9 toast+badge → B10 dọn placeholder). Tài liệu này sống — sửa dần khi dự án tiến triển.*
