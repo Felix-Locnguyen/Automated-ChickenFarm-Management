@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import './App.css';
 
 import LoginPage from './03_pages/LoginPage.jsx';
@@ -19,6 +19,7 @@ import {
   updateFlock,
   deleteFlock,
   fetchDevices,
+  createDevice,
   toggleDevice,
   pairDevice,
   fetchAlerts,
@@ -71,7 +72,7 @@ function flockToCoop(flock, reading, devices, feedingLogs, alerts, thresholdsMap
     stats: {},            // CageViewer hiển thị — backend chưa có (Phase 2)
     feedingSchedule: feedingLogs
       .filter(l => l.flock_id === flock.id && l.status === 'pending')
-      .map(l => ({ id: l.id, time: l.scheduled_time })),
+      .map(l => ({ id: l.id, time: l.scheduled_time, amount: l.amount_kg, type: l.feed_type })),
     thresholds: thresholdsMap[flock.id] || { tempMin: 20, tempMax: 35, humMin: 40, humMax: 80 },
     logs: [],
   };
@@ -195,9 +196,31 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
 
+
+
+  // ref giữ id của setTimeout — toast trước đang chờ tắt mà toast mới đến thì HỦY hẹn giờ cũ,
+  // nếu không toast mới sẽ bị tắt sớm bởi timeout của toast trước
+  const toastTimer = useRef(null);
+
   const showToast = (msg) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  // ===== B9: phát hiện alert MỚI từ kết quả poll / reload =====
+  // Set chứa id các alert đã "thấy" — ref (không phải state) vì chỉ nội bộ, không cần render lại
+  const seenAlertIds = useRef(new Set());
+  const alertsPrimed = useRef(false);   // lần nạp ĐẦU TIÊN = baseline (không toast), các lần sau = phát hiện mới
+
+  const detectFreshAlerts = (alertsData) => {
+    const fresh = alertsData.filter(a => !seenAlertIds.current.has(a.id));
+    if (fresh.length > 0) {
+      fresh.forEach(a => seenAlertIds.current.add(a.id));
+      showToast(fresh.length === 1
+        ? `⚠️ ${fresh[0].coop_name || 'Hệ thống'}: ${fresh[0].message}`
+        : `⚠️ ${fresh.length} cảnh báo mới!`);
+    }
   };
 
   /** Tải lại TOÀN BỘ dữ liệu — gọi sau mỗi thao tác CRUD cho dữ liệu luôn nhất quán. */
@@ -214,6 +237,14 @@ export default function App() {
       setFlocks(flocksData);
       setDevices(devicesData);
       setAlerts(alertsData);
+      // B9: lần nạp đầu (login/F5) = baseline — alert cũ không toast;
+      // các lần reload sau CRUD → vẫn phải phát hiện alert mới
+      if (!alertsPrimed.current) {
+        alertsPrimed.current = true;
+        alertsData.forEach(a => seenAlertIds.current.add(a.id));
+      } else {
+        detectFreshAlerts(alertsData);
+      }
       setFeedingLogs(logsData);
       setFinancialRecords(recordsData);
 
@@ -240,6 +271,7 @@ export default function App() {
         const [reading, alertsData] = await Promise.all([fetchLatestReading(), fetchAlerts()]);
         setLatestReading(reading);
         setAlerts(alertsData);
+        detectFreshAlerts(alertsData);   // B9: id chưa thấy → toast "⚠️ ..." + badge tự tăng theo
       } catch {
         // mạng chập chờn ở poll thì bỏ qua — thao tác chính sẽ báo lỗi riêng
       }
@@ -292,7 +324,6 @@ export default function App() {
     avgTemperature: latestReading?.temperature ?? '--',
     avgHumidity: latestReading?.humidity ?? '--',
     devicesList: uiDevices,
-    diseaseDetections: [],   // TODO Phase 3 — AI nhận diện bệnh
   }), [coops, uiAlerts, uiDevices, latestReading]);
 
   // ===== XỬ LÝ THAO TÁC =====
@@ -301,6 +332,12 @@ export default function App() {
   const handleDevicePaired = async (device) => {
     await loadData();
     showToast(`Đã ghép "${device.name}" vào chuồng của bạn`);
+  };
+
+  /** B10: thêm thiết bị từ form → nạp lại + toast (Devices tự mở QR cho thiết bị vừa tạo). */
+  const handleAddDevice = async (device) => {
+    await loadData();
+    showToast(`Đã thêm "${device.name}" — quét QR để ghép vào chuồng`);
   };
 
   /** Bật/tắt thiết bị → PUT /devices/{id}/toggle, cập nhật state từ kết quả server trả về. */
@@ -324,9 +361,9 @@ export default function App() {
     try {
       await createFeedingLog({
         flock_id: Number(coopId),
-        feed_type: 'Tự động',
-        amount_kg: 0,                       // TODO: form nhập kg (Phase 2)
-        scheduled_time: schedule.time,      // '06:00:00'
+        feed_type: schedule.type || 'Tự động',   // form CoopDetailView đã nhập (Sáng/Trưa/Chiều/Tối)
+        amount_kg: Number(schedule.amount) || 0,  // B10: dùng lượng kg người dùng nhập (trước đây hardcode 0)
+        scheduled_time: schedule.time,            // '06:00:00'
       });
       setFeedingLogs(await fetchFeedingLogs());
       showToast('Đã thêm lịch cho ăn');
@@ -346,10 +383,10 @@ export default function App() {
     }
   };
 
-  /** Lưu ngưỡng cảnh báo — tạm local, Phase 2 tạo bảng thresholds + PUT. */
+  /** Lưu ngưỡng cảnh báo — tạm local (backend chưa có bảng thresholds). */
   const handleUpdateThresholds = (coopId, thresholds) => {
     setThresholdsMap(prev => ({ ...prev, [coopId]: thresholds }));
-    showToast('Đã lưu mức cảnh báo (chưa lưu server — Phase 2)');
+    showToast('Đã lưu mức cảnh báo (lưu tạm trên máy này)');
   };
 
   /** Sửa tên / số gà chuồng → PUT /flocks/{id}. */
@@ -488,6 +525,9 @@ export default function App() {
     // reset dữ liệu để user sau không thấy data của user trước
     setFlocks([]); setDevices([]); setAlerts([]);
     setFeedingLogs([]); setFinancialRecords([]); setLatestReading(null);
+    // B9: reset alert đã thấy — nếu không user sau sẽ bị "toast storm" của user trước
+    seenAlertIds.current = new Set();
+    alertsPrimed.current = false;
   };
 
   // ===== RENDER =====
@@ -593,6 +633,7 @@ export default function App() {
             coops={coops}
             onToggleDevice={handleToggleDevice}
             onPaired={handleDevicePaired}
+            onAdded={handleAddDevice}
             onError={(msg) => showToast(`Lỗi: ${msg}`)}
           />
         )}

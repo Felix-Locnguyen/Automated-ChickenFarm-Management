@@ -1,10 +1,19 @@
 import { useState } from 'react';
 import DevicesList from '../02_components/02.1_Dashboard/DevicesList.jsx';
 import { QrShowModal, QrScanModal } from '../02_components/02.1_Dashboard/DevicePairing.jsx';
+import AddDeviceForm from '../02_components/02.1_Dashboard/AddDeviceForm.jsx';
 
-export default function Devices({ devices, coops, onToggleDevice, onPaired, onError }) {
+export default function Devices({ devices, coops, onToggleDevice, onPaired, onAdded, onError }) {
   const [openCoopId, setOpenCoopId] = useState(null);
   const [modal, setModal] = useState(null);   // { type: 'qr', device } → hiện QR | { type: 'scan' } → quét
+  const [showAddForm, setShowAddForm] = useState(false);   // B10: form thêm thiết bị
+
+  /** B10: thêm xong → đóng form, mở luôn modal QR cho thiết bị vừa tạo + báo App nạp lại. */
+  const handleAdded = (device) => {
+    setShowAddForm(false);
+    setModal({ type: 'qr', device });
+    onAdded(device);
+  };
 
   const handleToggle = (coopId) => {
     setOpenCoopId(prev => prev === coopId ? null : coopId);
@@ -18,10 +27,19 @@ export default function Devices({ devices, coops, onToggleDevice, onPaired, onEr
     <div className="tab-content active">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
         <h2 className="section-title" style={{ fontSize: '18px' }}>⚙️ Danh sách Thiết bị</h2>
-        <button className="btn-cancel-modal" onClick={() => setModal({ type: 'scan' })}>
-          📷 Quét QR
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn-cancel-modal" onClick={() => setShowAddForm(v => !v)}>
+            ＋ Thêm thiết bị
+          </button>
+          <button className="btn-cancel-modal" onClick={() => setModal({ type: 'scan' })}>
+            📷 Quét QR
+          </button>
+        </div>
       </div>
+
+      {showAddForm && (
+        <AddDeviceForm coops={coops} onAdded={handleAdded} onError={onError} />
+      )}
 
       {unpaired.length > 0 && (
         <div style={{ marginBottom: '16px' }}>
