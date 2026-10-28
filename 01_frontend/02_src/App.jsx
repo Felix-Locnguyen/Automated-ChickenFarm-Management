@@ -19,6 +19,7 @@ import {
   updateFlock,
   deleteFlock,
   fetchDevices,
+  createDevice,
   toggleDevice,
   pairDevice,
   fetchAlerts,
@@ -71,7 +72,7 @@ function flockToCoop(flock, reading, devices, feedingLogs, alerts, thresholdsMap
     stats: {},            // CageViewer hiển thị — backend chưa có (Phase 2)
     feedingSchedule: feedingLogs
       .filter(l => l.flock_id === flock.id && l.status === 'pending')
-      .map(l => ({ id: l.id, time: l.scheduled_time })),
+      .map(l => ({ id: l.id, time: l.scheduled_time, amount: l.amount_kg, type: l.feed_type })),
     thresholds: thresholdsMap[flock.id] || { tempMin: 20, tempMax: 35, humMin: 40, humMax: 80 },
     logs: [],
   };
@@ -323,7 +324,6 @@ export default function App() {
     avgTemperature: latestReading?.temperature ?? '--',
     avgHumidity: latestReading?.humidity ?? '--',
     devicesList: uiDevices,
-    diseaseDetections: [],   // TODO Phase 3 — AI nhận diện bệnh
   }), [coops, uiAlerts, uiDevices, latestReading]);
 
   // ===== XỬ LÝ THAO TÁC =====
@@ -332,6 +332,12 @@ export default function App() {
   const handleDevicePaired = async (device) => {
     await loadData();
     showToast(`Đã ghép "${device.name}" vào chuồng của bạn`);
+  };
+
+  /** B10: thêm thiết bị từ form → nạp lại + toast (Devices tự mở QR cho thiết bị vừa tạo). */
+  const handleAddDevice = async (device) => {
+    await loadData();
+    showToast(`Đã thêm "${device.name}" — quét QR để ghép vào chuồng`);
   };
 
   /** Bật/tắt thiết bị → PUT /devices/{id}/toggle, cập nhật state từ kết quả server trả về. */
@@ -355,9 +361,9 @@ export default function App() {
     try {
       await createFeedingLog({
         flock_id: Number(coopId),
-        feed_type: 'Tự động',
-        amount_kg: 0,                       // TODO: form nhập kg (Phase 2)
-        scheduled_time: schedule.time,      // '06:00:00'
+        feed_type: schedule.type || 'Tự động',   // form CoopDetailView đã nhập (Sáng/Trưa/Chiều/Tối)
+        amount_kg: Number(schedule.amount) || 0,  // B10: dùng lượng kg người dùng nhập (trước đây hardcode 0)
+        scheduled_time: schedule.time,            // '06:00:00'
       });
       setFeedingLogs(await fetchFeedingLogs());
       showToast('Đã thêm lịch cho ăn');
@@ -377,10 +383,10 @@ export default function App() {
     }
   };
 
-  /** Lưu ngưỡng cảnh báo — tạm local, Phase 2 tạo bảng thresholds + PUT. */
+  /** Lưu ngưỡng cảnh báo — tạm local (backend chưa có bảng thresholds). */
   const handleUpdateThresholds = (coopId, thresholds) => {
     setThresholdsMap(prev => ({ ...prev, [coopId]: thresholds }));
-    showToast('Đã lưu mức cảnh báo (chưa lưu server — Phase 2)');
+    showToast('Đã lưu mức cảnh báo (lưu tạm trên máy này)');
   };
 
   /** Sửa tên / số gà chuồng → PUT /flocks/{id}. */
@@ -627,6 +633,7 @@ export default function App() {
             coops={coops}
             onToggleDevice={handleToggleDevice}
             onPaired={handleDevicePaired}
+            onAdded={handleAddDevice}
             onError={(msg) => showToast(`Lỗi: ${msg}`)}
           />
         )}
