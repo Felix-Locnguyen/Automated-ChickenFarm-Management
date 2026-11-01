@@ -1,0 +1,23 @@
+# 05_docker/Dockerfile.backend
+# Build từ GỐC REPO:  docker build -f 05_docker/Dockerfile.backend .
+FROM python:3.12-slim
+
+WORKDIR /srv
+
+# Cài dependency trước (cache layer — chỉ rebuild khi requirements.txt đổi)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy code backend + script seed
+# Layout trong container: /srv/02_backend/app  +  /srv/08_scripts/seed
+# → giống layout repo nên seed/data.py (sys.path parents[2]/02_backend) tự chạy được
+COPY 02_backend/app 02_backend/app
+COPY 08_scripts/seed 08_scripts/seed
+
+WORKDIR /srv/02_backend
+
+# Ảnh camera local (fallback khi MinIO chậm) — nên mount volume ngoài trong compose
+ENV PYTHONPATH=/srv/02_backend
+
+EXPOSE 8020
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8020"]

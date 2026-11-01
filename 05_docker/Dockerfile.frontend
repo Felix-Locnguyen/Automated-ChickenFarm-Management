@@ -1,0 +1,24 @@
+# 05_docker/Dockerfile.frontend
+# Build từ GỐC REPO:  docker build -f 05_docker/Dockerfile.frontend .
+# Stage 1: build static bằng Node → Stage 2: serve bằng nginx
+# (nginx vừa phát file build, vừa reverse proxy /api + /storage sang backend —
+#  thay cho vite proxy chỉ dùng khi dev)
+
+# ---------- Stage 1: build ----------
+FROM node:20-alpine AS build
+WORKDIR /app
+
+# Copy manifest trước để cache layer npm install
+COPY 01_frontend/package.json 01_frontend/package-lock.json ./
+RUN npm ci
+
+COPY 01_frontend/ ./
+RUN npm run build        # → /app/dist
+
+# ---------- Stage 2: serve ----------
+FROM nginx:alpine
+# Ghi đè config mặc định: SPA + proxy /api, /storage → backend:8020
+COPY 05_docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+
+EXPOSE 80

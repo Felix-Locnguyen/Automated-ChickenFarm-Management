@@ -1,21 +1,63 @@
 # ═══════════════════════════════════════════════════════════════
-#  docker-compose — B2: MinIO (S3-compatible) lưu ẢNH BỆNH
-#  Chạy:   docker compose -f 05_docker/docker-compose.yml up -d
-#  Console: http://localhost:9001  (farmminio / farmminio123)
-#  Ghi chú: user/pass mặc định cho LOCAL dev — production phải
-#           đọc từ .env!
+#  docker-compose — PHASE 5: cả hệ thống trong 1 lệnh
+#  Chạy từ gốc repo:
+#     docker compose -f 05_docker/docker-compose.yml up -d --build
+#  (hoặc: 08_scripts/deploy.sh)
+#
+#  Service: postgres · mosquitto · minio(+init) · yolo-service · backend · frontend
+#
+#  Cổng HOST (tránh xung đột với service native trên máy dev):
+#     5433→postgres  1884→mosquitto  9000/9001→minio  8020→backend  8080→frontend
+#  Biến bí mật (SECRET_KEY, mật khẩu DB/MinIO) đọc từ file .env cạnh file này
+#  — xem .env.example
 # ═══════════════════════════════════════════════════════════════
+
 services:
+  # ── 1. PostgreSQL — dữ liệu trang trại ──
+  postgres:
+    image: postgres:16-alpine
+    container_name: farm-postgres
+    environment:
+      POSTGRES_USER: farm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-farmpg123}
+      POSTGRES_DB: chicken_farm
+    ports:
+      - "5433:5432"        # host 5433 (5432 native đã bị chiếm trên máy dev)
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U farm -d chicken_farm"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── 2. Mosquitto — broker MQTT (uplink cảm biến + lệnh điều khiển) ──
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: farm-mosquitto
+    ports:
+      - "1884:1883"        # host 1884 (1883 native mosquitto đang chạy)
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-data:/mosquitto/data
+    healthcheck:
+      # $SYS/broker/uptime là topic giữ lại (retained) — sub là biết broker sống
+      test: ["CMD-SHELL", "mosquitto_sub -h localhost -t '$$SYS/broker/uptime' -C 1 -W 3 > /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── 3. MinIO — object storage, CHỈ lưu ảnh phát hiện bệnh ──
   minio:
     image: minio/minio:latest
     container_name: farm-minio
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"   # S3 API
-      - "9001:9001"   # Web console
+      - "9000:9000"        # S3 API
+      - "9001:9001"        # Web console
     environment:
-      MINIO_ROOT_USER: farmminio
-      MINIO_ROOT_PASSWORD: farmminio123
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-farmminio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-farmminio123}
     volumes:
       - minio-data:/data
     healthcheck:
@@ -32,11 +74,78 @@ services:
         condition: service_healthy
     entrypoint: >
       /bin/sh -c "
-      mc alias set local http://minio:9000 farmminio farmminio123 &&
+      mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-farmminio} ${MINIO_ROOT_PASSWORD:-farmminio123} &&
       mc mb --ignore-existing local/disease-images &&
       mc anonymous set download local/disease-images &&
       echo '=== Bucket disease-images san sang ==='
       "
 
+  # ── 4. YOLO service — nhận diện gà từ ảnh camera ──
+  yolo-service:
+    build: ../cloud/yolo-service
+    container_name: farm-yolo
+    # Weight KHÔNG COPY vào image — mount read-only từ repo (19MB)
+    volumes:
+      - ../04_machine_learning/models/chicken_detection/runs/yolo26s/weights/best.pt:/models/best.pt:ro
+    environment:
+      YOLO_MODEL_PATH: /models/best.pt
+      YOLO_MODEL: yolo26s
+      YOLO_CONF: "0.25"
+    # Không expose ra host — chỉ backend trong mạng compose gọi qua :8030
+
+  # ── 5. Backend — FastAPI (REST + MQTT worker + scheduler) ──
+  backend:
+    build:
+      context: ..
+      dockerfile: 05_docker/Dockerfile.backend
+    container_name: farm-backend
+    ports:
+      - "8020:8020"
+    environment:
+      DATABASE_URL: postgresql+psycopg2://farm:${POSTGRES_PASSWORD:-farmpg123}@postgres:5432/chicken_farm
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-doi-truoc-khi-deploy}
+      MQTT_BROKER_HOST: mosquitto
+      MQTT_BROKER_PORT: 1883
+      YOLO_SERVICE_URL: http://yolo-service:8030
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-farmminio}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-farmminio123}
+      MINIO_BUCKET: disease-images
+      PAIR_BASE_URL: http://localhost:8080   # URL nhúng vào QR ghép thiết bị
+    volumes:
+      # Ảnh camera local (fallback MinIO) — giữ giữa các lần rebuild
+      - camera-storage:/srv/02_backend/app/storage/camera
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mosquitto:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+      yolo-service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8020/openapi.json')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ── 6. Frontend — nginx serve build Vite + reverse proxy → backend ──
+  frontend:
+    build:
+      context: ..
+      dockerfile: 05_docker/Dockerfile.frontend
+    container_name: farm-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
+  pgdata:
   minio-data:
+  camera-storage:
+  mosquitto-data:

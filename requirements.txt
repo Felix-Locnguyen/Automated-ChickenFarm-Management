@@ -11,8 +11,8 @@ python-jose[cryptography]
 python-multipart
 pytest
 httpx
-pytest
 pandas
 numpy
-
-
+# QR pairing (sinh mã QR cho thiết bị) + MinIO client (lưu ảnh bệnh)
+qrcode[pil]
+minio
