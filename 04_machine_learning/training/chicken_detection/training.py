@@ -120,7 +120,7 @@ def confirm_train(args):
 def stage3_train(args):
     """Train lần lượt các model trong args.models → runs/<tên>/weights/best.pt."""
     header("GIAI ĐOẠN 3 — HUẤN LUYỆN MÔ HÌNH")
-    assert DATA_YAML.exists(), "Thiếu chicken_v2_yolo/data.yaml — chạy --stage validate trước"
+    assert DATA_YAML.exists(), "Thiếu data.yaml — chạy --stage validate trước"
     if not confirm_train(args):
         return
 

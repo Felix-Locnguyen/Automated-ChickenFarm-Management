@@ -3,13 +3,14 @@
 GĐ1b — XỬ LÝ dữ liệu:
   - LỌC    : chỉ mẫu is_label_valid = 1 được đưa vào train
   - CHUYỂN : polygon → bbox 5 cột (qua module encoding)
-  - Dựng lại thư mục train-ready chicken_v2_yolo/ + data.yaml
-  ⚠ Dữ liệu GỐC (chicken_v2/) không bao giờ bị ghi đè.
+  - Dựng lại thư mục train-ready chicken_counting_v18_yolo/ + data.yaml
+    (⚠ data đã train-ready → GĐ1b tự bỏ qua, không rmtree)
+  ⚠ Dữ liệu GỐC (chicken_counting_v18_yolo/) không bao giờ bị ghi đè.
 """
 import shutil
 from pathlib import Path
 
-from config import CLASS_NAMES, DATA_YAML, SPLITS, YOLO_DIR, p
+from config import CLASS_NAMES, DATA_YAML, RAW_DIR, SPLITS, YOLO_DIR, p
 from encoding import parse_label_line, to_yolo_line
 
 
@@ -25,9 +26,16 @@ def write_data_yaml():
 
 def build_yolo_tree(df):
     """
-    Dựng lại chicken_v2_yolo/ từ các mẫu hợp lệ của df.
+    Dựng lại YOLO_DIR từ các mẫu hợp lệ của df.
     Mỗi mẫu: copy ảnh + ghi nhãn đã convert sang bbox 5 cột. Trả về số mẫu.
+
+    ⚠ AN TOÀN: nếu RAW_DIR == YOLO_DIR (data đã ở dạng YOLO train-ready)
+    → BỎ QUA toàn bộ convert/rebuild, vì shutil.rmtree bên dưới sẽ XÓA HẾT data.
     """
+    if RAW_DIR.resolve() == YOLO_DIR.resolve():
+        p(f"Data đã train-ready tại {YOLO_DIR} (RAW == YOLO) → bỏ qua convert, giữ nguyên.")
+        p(f"data.yaml: {DATA_YAML} (giữ nguyên, không ghi đè)")
+        return len(df)
     # dựng lại từ đầu → idempotent, không sót file của lần chạy trước
     if YOLO_DIR.exists():
         shutil.rmtree(YOLO_DIR)

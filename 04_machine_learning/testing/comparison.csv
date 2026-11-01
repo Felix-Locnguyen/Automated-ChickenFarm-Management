@@ -1,0 +1,3 @@
+﻿model,size_mb,mAP@0.5,avg_ms,ms_std,fps_avg,fps_min,fps_max,count_avg,count_max,total_dets
+yolo26n (nano),5.2,0.79,5.34,0.77,189.7,80.6,219.9,2.4,11,2240
+yolo26s (small),19.4,0.813,6.9,0.42,145.4,85.5,157.1,6.4,16,5889

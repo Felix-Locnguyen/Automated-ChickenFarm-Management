@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 """
 ═════════════════════════════════════════════════════════════════════════
- PIPELINE YOLO26 — Nhận diện gà broiler (4 giai đoạn)
+ PIPELINE YOLO26 — Nhận diện gà / chicken (4 giai đoạn)
  File : 04_machine_learning/training/chicken_detection/pipeline.py
  Nhóm thành các module nhỏ (cùng thư mục):
 
    config.py      — đường dẫn, hằng số, hàm log
    encoding.py    — MÃ HÓA: validate dòng label, polygon→bbox, YOLO↔pixel
    data_check.py  — KIỂM TRA (GĐ1a): quét dataset → data_report.csv
-   data_process.py— XỬ LÝ  (GĐ1b): lọc mẫu, convert, dựng chicken_v2_yolo/
+   data_process.py— XỬ LÝ  (GĐ1b): lọc mẫu, convert, dựng chicken_counting_v18_yolo/
    features.py    — TẠO ĐẶC TRƯNG (GĐ2): augmentation động Albumentations
    viz.py         — toàn bộ biểu đồ (GĐ1/GĐ2/GĐ4)
    training.py    — HUẤN LUYỆN (GĐ3): profiler tài nguyên, xác nhận [Y/n]
@@ -62,21 +62,21 @@ def stage2():
 
 def build_parser():
     ap = argparse.ArgumentParser(
-        description="Pipeline YOLO26 — nhận diện gà broiler (4 giai đoạn)",
+        description="Pipeline YOLO26 — nhận diện gà / chicken (4 giai đoạn)",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     ap.add_argument("--stage", choices=["validate", "aug", "train", "eval", "all"],
                     default="all", help="giai đoạn cần chạy")
-    ap.add_argument("--models", nargs="+", default=["yolo26n", "yolo26s"],
-                    choices=["yolo26n", "yolo26s"],
-                    help="model YOLO26 cần huấn luyện/đánh giá")
-    ap.add_argument("--epochs", type=int, default=100)
+    ap.add_argument("--models", nargs="+", default=["yolo8n", "yolo8s"],
+                    choices=["yolo8n", "yolo8s"],
+                    help="model YOLO8 cần huấn luyện/đánh giá")
+    ap.add_argument("--epochs", type=int, default=20)
     ap.add_argument("--batch", type=int, default=16)
-    ap.add_argument("--imgsz", type=int, default=640)
+    ap.add_argument("--imgsz", type=int, default=320)
     ap.add_argument("--lr0", type=float, default=0.001)
     ap.add_argument("--optimizer", default="SGD", choices=["SGD", "Adam", "AdamW", "auto"])
     ap.add_argument("--patience", type=int, default=20, help="early-stop chống overfit")
     ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--workers", type=int, default=3)
     ap.add_argument("--conf", type=float, default=0.25, help="ngưỡng conf lúc eval")
     ap.add_argument("--speed-images", type=int, default=200, help="số ảnh benchmark (100–500)")
     ap.add_argument("--prof-interval", type=float, default=3.0, help="chu kỳ log CPU/GPU (giây)")

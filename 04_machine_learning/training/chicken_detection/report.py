@@ -16,7 +16,7 @@ def write_report(per_model, extras=None):
     """
     extras = extras or {}
     lines = [
-        "# BÁO CÁO ĐÁNH GIÁ MÔ HÌNH — YOLO26 Nhận diện gà broiler",
+        "# BÁO CÁO ĐÁNH GIÁ MÔ HÌNH — YOLO8 Nhận diện gà (chicken)",
         "",
         f"_Tạo tự động bởi `training/chicken_detection/pipeline.py` — "
         f"{time.strftime('%Y-%m-%d %H:%M:%S')}_",
@@ -95,7 +95,7 @@ def write_report(per_model, extras=None):
               "POLYGON, đã convert → bbox, chỉ mẫu hợp lệ đưa vào train.",
               "- Augmentation động (xám/đèn ấm/nhiễu) áp dụng theo xác suất lúc train, "
               "không ghi đè ảnh gốc.",
-              "- YOLO26 (hệ v8+) không còn nhánh objectness riêng; loss = box + cls + l1.",
+              "- YOLO8 không còn nhánh objectness riêng; loss = box + cls + l1.",
               "- AP tính theo all-point interpolation; mAP@0.5:0.95 trung bình IoU "
               "0.5→0.95 bước 0.05; detections lọc conf≥ngưỡng eval.",
               "- SIoU = IoU − (Λ + Δ + Ω)/2 (Tong et al., 2023).",
