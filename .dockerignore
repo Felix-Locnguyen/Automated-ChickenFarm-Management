@@ -1,0 +1,28 @@
+# .dockerignore — giữ build context nhỏ (repo có .venv/node_modules/dataset vài GB)
+.git
+.gitignore
+.venv
+.pytest_cache
+.mimocode
+**/__pycache__
+**/*.pyc
+
+# Frontend
+01_frontend/node_modules
+01_frontend/dist
+
+# ML — weight/dataset KHÔNG cần trong image backend
+# (yolo-service tự mount best.pt qua volume trong docker-compose)
+04_machine_learning
+runs
+weights
+*.pt
+*.zip
+
+# DB local + file rác
+**/*.db
+test_path
+*.log
+
+# Env bí mật — không bao giờ đưa vào image
+**/.env
